@@ -1,3 +1,4 @@
+## This is the default ingress providing access to the K3s API server over TCP.
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP

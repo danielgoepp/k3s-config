@@ -13,3 +13,34 @@ spec:
   ingress_class_name: traefik
   ingress_annotations: |
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: awx-projects-pv
+  labels:
+    type: local
+spec:
+  storageClassName: awx-projects-volume
+  capacity:
+    storage: 5Gi # This is a placeholder; K3s local-path doesn't enforce size
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/k3s-prod-data/awx/projects"
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: awx-projects-claim
+  namespace: awx
+spec:
+  storageClassName: awx-projects-volume
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

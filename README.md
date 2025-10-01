@@ -27,14 +27,6 @@ This repository manages a complete home infrastructure stack including:
 - **cert-manager**: Automated TLS certificate management via Cloudflare DNS
 - **CloudNativePG**: PostgreSQL operator for database workloads
 
-### Data Pipeline
-
-```
-IoT Sensors → MQTT (Mosquitto) → Telegraf → VictoriaMetrics → Grafana
-                                      ↓
-                                 MQTT (processed metrics)
-```
-
 ## Repository Structure
 
 ```
@@ -65,38 +57,6 @@ kubectl apply -f <service>/manifests/<service>-prod.yaml
 helm upgrade --install <release> <chart-repo>/<chart> \
   -f <service>/helm/<values>-prod.yaml \
   --namespace <namespace> --create-namespace
-```
-
-## Key Services
-
-### Home Automation
-- **Home Assistant**: `homeassistant-prod.goepp.net`
-- **Zigbee2MQTT**: `zigbee11.goepp.net`, `zigbee15.goepp.net`
-- **ESPHome**: ESP device management
-
-### Monitoring & Visualization
-- **Grafana**: `grafana-prod.goepp.net`
-- **Uptime Kuma**: Service monitoring
-
-### Automation
-- **AWX**: `awx-prod.goepp.net` - Ansible automation platform
-
-## Common Operations
-
-### View resources
-```bash
-kubectl get all -n <namespace>
-kubectl get ingressroute -A
-```
-
-### Check logs
-```bash
-kubectl logs -n <namespace> <pod> -f
-```
-
-### Restart deployment
-```bash
-kubectl rollout restart deployment/<name> -n <namespace>
 ```
 
 ## Notes
