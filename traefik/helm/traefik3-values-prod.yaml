@@ -1,0 +1,71 @@
+deployment:
+  kind: DaemonSet
+
+providers:
+  kubernetesCRD:
+    allowExternalNameServices: true
+
+  kubernetesIngress:
+    allowExternalNameServices: true
+
+ports:
+  traefik:
+    expose:
+      default: true
+  metrics:
+    expose:
+      default: true
+  syslog-udp:
+    port: 1514
+    expose:
+      default: true
+    exposedPort: 1514
+    protocol: UDP
+  gelf-udp:
+    port: 12201
+    expose:
+      default: true
+    exposedPort: 12201
+    protocol: UDP
+  mqtt-tcp:
+    port: 1883
+    expose:
+      default: true
+    exposedPort: 1883
+    protocol: TCP
+  mail-tcp:
+    port: 587
+    expose:
+      default: true
+    exposedPort: 587
+    protocol: TCP
+  api-tcp:
+    port: 6443
+    expose:
+      default: true
+    exposedPort: 6443
+    protocol: TCP
+  syncthing-tcp:
+    port: 22000
+    expose:
+      default: true
+    exposedPort: 22000
+    protocol: TCP
+
+tlsStore:
+  default:
+    defaultCertificate:
+      secretName: wildcard-goepp-net-tls
+
+service:
+  spec:
+    loadBalancerIP: "10.1.11.51"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "300m"
+    memory: "512Mi"
+

@@ -1,0 +1,50 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mongodb-backup
+  namespace: mongodb
+spec:
+  schedule: "5 1 * * *"
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mongodb-backup
+            image: docker.io/mongo:8.0.13
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: HOSTNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: hostname
+              - name: USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: username
+              - name: PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: password
+              - name: DATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: database
+            command: ["/bin/sh", "-c"]
+            args:
+              - /usr/bin/mongodump --uri="mongodb+srv://$USERNAME:$PASSWORD@$HOSTNAME/$DATABASE?replicaSet=mongodb&ssl=false" --archive=/backups/mongodb/mongodb-$(date +'%Y-%m-%d').archive;
+                find /backups/mongodb -mtime +7 -delete;
+            volumeMounts:
+            - name: backups
+              mountPath: /backups
+          restartPolicy: Never
+          volumes:
+          - name: backups
+            hostPath:
+              path: "/mnt/backups"

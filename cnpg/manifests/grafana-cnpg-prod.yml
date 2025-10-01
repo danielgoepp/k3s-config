@@ -1,0 +1,112 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: grafana-prod
+  namespace: cnpg-grafana
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  instances: 2
+
+  storage:
+    size: 1Gi
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  postgresql:
+    parameters:
+      timezone: "America/New_York"
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpgbackup/
+      endpointURL: https://minio-s3-prod.goepp.net
+      s3Credentials:
+        accessKeyId:
+          name: minio-creds
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: minio-creds
+          key: MINIO_SECRET_KEY
+    retentionPolicy: "1d"
+
+  ## This is necessary to create the database and user - do not remove even after initial setup - needed for setting username
+  bootstrap:
+    initdb:
+      database: grafana
+      owner: grafana
+  ## Leave this commented out - only used the first time to import data from an external cluster
+  #     import:
+  #       type: microservice
+  #       databases:
+  #         - grafana
+  #       source:
+  #         externalCluster: postgres16
+  # externalClusters:
+  #   - name: postgres16
+  #     connectionParameters:
+  #       host: postgres16-postgresql-ha-pgpool.postgres.svc.cluster.local
+  #       user: postgres
+  #       dbname: grafana
+  #     password:
+  #       name: postgres-prod-admin
+  #       key: password
+
+  ## Recovery from backup
+  # bootstrap:
+  #   recovery:
+  #     source: grafana-prod
+  #     recoveryTarget:
+  #       targetTime: "2025-07-18 00:00:00"
+  # externalClusters:
+  #   # Name has to match the cluster name
+  #   - name: grafana-prod
+  #     barmanObjectStore:
+  #       destinationPath: s3://cnpgbackup/
+  #       endpointURL: https://minio-s3-prod.goepp.net
+  #       s3Credentials:
+  #         accessKeyId:
+  #           name: minio-creds
+  #           key: MINIO_ACCESS_KEY
+  #         secretAccessKey:
+  #           name: minio-creds
+  #           key: MINIO_SECRET_KEY
+
+  ## Uncomment this section to remove the app role after initial setup
+  ## See database delete manifest for more details on removing the app database
+  # managed:
+  #   roles:
+  #     - name: app
+  #       ensure: absent
+        
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: grafana-prod-backup
+  namespace: cnpg-grafana
+spec:
+  schedule: "0 0 0 * * *"
+  method: barmanObjectStore
+  immediate: true
+  cluster:
+    name: grafana-prod
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-prod-monitor
+  namespace: cnpg-grafana
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+  selector: 
+    matchLabels:
+      "cnpg.io/cluster": grafana-prod

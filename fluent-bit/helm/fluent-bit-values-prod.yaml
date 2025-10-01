@@ -1,0 +1,110 @@
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+config:
+
+  ## https://docs.fluentbit.io/manual/pipeline/inputs
+  inputs: |
+    [INPUT]
+        Name tail
+        Parser containerd
+        Path /var/log/pods/*/*/*.log
+        Exclude_Path /var/log/pods/*/coredns/*.log,/var/log/pods/*/fluent*/*.log
+        Tag kube.*
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+  ## https://docs.fluentbit.io/manual/pipeline/filters
+  filters: |
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Kube_Tag_Prefix kube.var.log.pods.
+        Regex_Parser k3s
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+
+    [FILTER]
+        Name nest
+        Match kube.*
+        Operation lift
+        Nested_under kubernetes
+        Add_prefix k3s_
+
+    [FILTER]
+        name parser
+        Match kube.var.log.pods.homeassistant*
+        Key_Name message
+        Parser homeassistant_remove_color
+        Reserve_Data On
+
+    [FILTER]
+        Name modify
+        Match kube.var.log.pods.homeassistant*
+        Condition Key_Does_Not_Exist message_ha
+        Set message_ha ""
+
+    [FILTER]
+        name multiline
+        Match kube.var.log.pods.homeassistant*
+        multiline.parser multiline_homeassistant
+
+    [FILTER]
+        Name modify
+        Match kube.var.log.pods.homeassistant*
+        Hard_rename message_ha message
+
+  ## https://docs.fluentbit.io/manual/pipeline/outputs
+  outputs: |
+    [OUTPUT]
+        Name gelf
+        Match kube.*
+        Host graylog-prod.goepp.net.
+        Port 12201
+        Mode udp
+        Gelf_Short_Message_Key message
+        Gelf_Host_Key k3s_host
+
+    # [OUTPUT]
+    #     Name stdout
+    #     Match kube.*
+    #     Match kube.var.log.pods.homeassistant*
+
+
+  ## https://docs.fluentbit.io/manual/pipeline/parsers
+  ## https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/multiline-parsing
+  customParsers: |
+    [PARSER]
+        Name containerd
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+        Name k3s
+        Format regex
+        Regex ^(?<namespace_name>[^_]+)_(?<pod_name>[^_]+)_(?<docker_id>[^.]*)\.(?<container_name>.+)\.\d+\.log$
+
+    [PARSER]
+        Name homeassistant_remove_color
+        Format regex
+        Regex ^(\x1b)?(\[\d+m)?(?<message_ha>.*?)(\x1b)?(\[0m)?$
+
+    [MULTILINE_PARSER]
+        name multiline_homeassistant
+        type regex
+        flush_timeout 1000
+        key_content message_ha
+        rule      "start_state"   "/^(\d{4}\-\d{2}\-\d{2}).+$/"        "cont"
+        rule      "cont"          "/^$|^(?!\d{4}\-\d{2}\-\d{2}).+$/"   "cont"
+
+

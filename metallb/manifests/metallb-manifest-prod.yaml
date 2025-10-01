@@ -1,0 +1,29 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: core-secure-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.1.11.51-10.1.11.59
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: core-secure-local
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - core-secure-pool
+  nodeSelectors:
+  - matchLabels:
+      kubernetes.io/hostname: k3s-prod-11
+  - matchLabels:
+      kubernetes.io/hostname: k3s-prod-12
+  - matchLabels:
+      kubernetes.io/hostname: k3s-prod-13
+  - matchLabels:
+      kubernetes.io/hostname: k3s-prod-15
+

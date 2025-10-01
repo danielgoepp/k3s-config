@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hertzbeat
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hertzbeat
+  namespace: hertzbeat
+  labels:
+    app: hertzbeat
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hertzbeat
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: hertzbeat
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: hertzbeat
+        image: apache/hertzbeat:1.7.2
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+        ports:
+        - name: http
+          containerPort: 1157
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 1157
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 1157
+        volumeMounts:
+        - name: hertzbeat-data
+          mountPath: /opt/hertzbeat/data
+        - name: hertzbeat-logs
+          mountPath: /opt/hertzbeat/logs
+        - name: hertzbeat-config
+          mountPath: /opt/hertzbeat/config/application.yml
+          subPath: application.yml
+        - name: hertzbeat-config
+          mountPath: /opt/hertzbeat/config/sureness.yml
+          subPath: sureness.yml
+      volumes:
+      - name: hertzbeat-data
+        hostPath:
+          path: /mnt/k3s-prod-data/hertzbeat/data
+      - name: hertzbeat-logs
+        hostPath:
+          path: /mnt/k3s-prod-data/hertzbeat/logs
+      - name: hertzbeat-config
+        hostPath:
+          path: /mnt/k3s-prod-data/hertzbeat/config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hertzbeat
+  namespace: hertzbeat
+spec:
+  selector:
+    app: hertzbeat
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 1157
+    targetPort: 1157
+    protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: hertzbeat-ingress
+  namespace: hertzbeat
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`hertzbeat-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: hertzbeat
+          port: 1157

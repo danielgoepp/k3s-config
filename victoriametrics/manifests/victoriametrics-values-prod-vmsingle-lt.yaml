@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: victoriametrics
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMSingle
+metadata:
+  name: vms-prod-lt
+  namespace: victoriametrics
+spec:
+  image:
+    repository: victoriametrics/victoria-metrics
+    tag: v1.126.0
+    pullPolicy: Always
+  volumes:
+    - name: vms-data-lt
+      hostPath:
+        path: /mnt/k3s-prod-data/vms-prod-lt
+  volumeMounts:
+    - name: vms-data-lt
+      mountPath: /data
+  storageDataPath: /data
+  retentionPeriod: "100y"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2048Mi
+    requests:
+      cpu: 500m
+      memory: 1024Mi
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vms-prod-lt-ingress
+  namespace: victoriametrics
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`vms-prod-lt.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: vmsingle-vms-prod-lt
+          port: 8429

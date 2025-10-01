@@ -1,0 +1,69 @@
+clusterName: "opensearch-prod"
+masterService: "opensearch-prod-cluster-master"
+
+image:
+  repository: "opensearchproject/opensearch"
+  tag: "2.19.3"
+  pullPolicy: "Always"
+
+config:
+  opensearch.yml: |
+    plugins:
+      security:
+        disabled: true
+        ssl:
+          http:
+            enabled: false
+        allow_unsafe_democertificates: true
+        allow_default_init_securityindex: true
+        authcz:
+          admin_dn:
+            - CN=kirk,OU=client,O=client,L=test,C=de
+        audit.type: internal_opensearch
+        enable_snapshot_restore_privilege: true
+        check_snapshot_restore_write_privileges: true
+        restapi:
+          roles_enabled: ["all_access", "security_rest_api_access"]
+        system_indices:
+          enabled: true
+          indices:
+            [
+              ".opendistro-alerting-config",
+              ".opendistro-alerting-alert*",
+              ".opendistro-anomaly-results*",
+              ".opendistro-anomaly-detector*",
+              ".opendistro-anomaly-checkpoints",
+              ".opendistro-anomaly-detection-state",
+              ".opendistro-reports-*",
+              ".opendistro-notifications-*",
+              ".opendistro-notebooks",
+              ".opendistro-asynchronous-search-response*",
+            ]
+
+opensearchJavaOpts: "-Xmx3g -Xms3g"
+
+resources:
+  limits:
+     cpu: "2"
+     memory: "6Gi"
+  requests:
+     cpu: "1000m"
+     memory: "1Gi"
+
+initResources:
+  limits:
+     cpu: "2"
+     memory: "6Gi"
+  requests:
+     cpu: "1000m"
+     memory: "1Gi"
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  path: /
+  hosts:
+    - opensearch-prod.goepp.net
+  tls: []

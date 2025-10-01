@@ -1,0 +1,176 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: graylog
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: graylog
+  namespace: graylog
+spec:
+  serviceName: "graylog"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: graylog
+  template:
+    metadata:
+      labels:
+        app: graylog
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: graylog
+        image: graylog/graylog:6.3
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        envFrom:
+        - secretRef:
+            name: graylog-secrets-prod
+        volumeMounts:
+        - name: graylog-data
+          mountPath: /usr/share/graylog/data
+        - name: config
+          mountPath: /usr/share/graylog/data/config
+        ports:
+        - name: http
+          containerPort: 9000
+        - name: syslog-udp
+          containerPort: 1514
+          protocol: UDP
+        - name: gelf-udp
+          containerPort: 12201
+          protocol: UDP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9000
+          initialDelaySeconds: 0 
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9000
+          initialDelaySeconds: 0
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: config
+        configMap:
+          name: graylog-config
+  volumeClaimTemplates:
+  - metadata:
+      name: graylog-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graylog-udp
+  namespace: graylog
+  labels:
+    app: graylog
+spec:
+  selector:
+    app: graylog
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: syslog-udp
+    port: 1514
+    targetPort: 1514
+    protocol: UDP
+  - name: gelf-udp
+    port: 12201
+    targetPort: 12201
+    protocol: UDP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graylog-tcp
+  namespace: graylog
+  labels:
+    app: graylog
+spec:
+  selector:
+    app: graylog
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http
+    port: 9000
+    targetPort: 9000
+    protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: graylog-syslog-udp
+  namespace: graylog
+spec:
+  entryPoints:
+    - syslog-udp
+  routes:
+  - services:
+    - name: graylog-udp
+      port: 1514
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: graylog-gelf-udp
+  namespace: graylog
+spec:
+  entryPoints:
+    - gelf-udp
+  routes:
+  - services:
+    - name: graylog-udp
+      port: 12201
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: graylog
+  namespace: graylog
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`graylog-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: graylog-tcp
+          port: 9000

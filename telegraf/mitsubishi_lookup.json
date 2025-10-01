@@ -1,0 +1,14 @@
+{
+    "Greatroom Temperature": {
+        "target_topic": "temp/GreatroomAir/remote_temp"
+    },
+    "Blue Room Temperature": {
+        "target_topic": "temp/BlueroomAir/remote_temp"
+    },
+    "Yoga Room Temperature": {
+        "target_topic": "temp/StudioAir/remote_temp"
+    },
+    "Bedroom Temperature": {
+        "target_topic": "temp/BedroomAir/remote_temp"
+    }
+}

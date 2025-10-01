@@ -1,0 +1,113 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: hertzbeat-prod
+  namespace: cnpg-hertzbeat
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  instances: 2
+
+  storage:
+    size: 1Gi
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  postgresql:
+    parameters:
+      timezone: "America/New_York"
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpgbackup/
+      endpointURL: https://minio-s3-prod.goepp.net
+      s3Credentials:
+        accessKeyId:
+          name: minio-creds
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: minio-creds
+          key: MINIO_SECRET_KEY
+    retentionPolicy: "1d"
+
+  ## Import from external cluster - this was the initial migration from the old cluster
+  bootstrap:
+    initdb:
+      database: hertzbeat
+      owner: hertzbeat
+  #     import:
+  #       type: microservice
+  #       databases:
+  #         - hertzbeat
+  #       source:
+  #         externalCluster: postgres16
+  # externalClusters:
+  #   - name: postgres16
+  #     connectionParameters:
+  #       host: postgres16-postgresql-ha-pgpool.postgres.svc.cluster.local
+  #       user: postgres
+  #       dbname: hertzbeat
+  #     password:
+  #       name: postgres-prod-admin
+  #       key: password
+
+  ## Recovery from backup
+  # bootstrap:
+  #   recovery:
+  #     source: hertzbeat-prod
+  # externalClusters:
+  #   # Name has to match the cluster name
+  #   - name: hertzbeat-prod
+  #     barmanObjectStore:
+  #       destinationPath: s3://cnpgbackup/
+  #       endpointURL: https://minio-s3-prod.goepp.net
+  #       s3Credentials:
+  #         accessKeyId:
+  #           name: minio-creds
+  #           key: MINIO_ACCESS_KEY
+  #         secretAccessKey:
+  #           name: minio-creds
+  #           key: MINIO_SECRET_KEY
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: hertzbeat-prod-backup
+  namespace: cnpg-hertzbeat
+spec:
+  schedule: "0 0 0 * * *"
+  method: barmanObjectStore
+  immediate: true
+  cluster:
+    name: hertzbeat-prod
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-prod-monitor
+  namespace: cnpg-hertzbeat
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+  selector: 
+    matchLabels:
+      "cnpg.io/cluster": hertzbeat-prod
+
+
+# ---
+# apiVersion: postgresql.cnpg.io/v1
+# kind: Backup
+# metadata:
+#   name: hertzbeat-prod-backup
+# spec:
+#   method: barmanObjectStore
+#   cluster:
+#     name: hertzbeat-prod

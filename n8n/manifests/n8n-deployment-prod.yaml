@@ -1,0 +1,126 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: n8n
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+  labels:
+    app: n8n
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: n8n
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+      - name: n8n
+        image: n8nio/n8n:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "2000m"
+            memory: "512Mi"
+        env:
+        - name: VUE_APP_URL_BASE_API
+          value: "https://n8n-prod.goepp.net/"
+        - name: GENERIC_TIMEZONE
+          value: "America/New_York"
+        - name: TZ
+          value: "America/New_York"
+        - name: "N8N_HOST"
+          value: "n8n-prod.goepp.net"
+        - name: "N8N_PORT"
+          value: "5678"
+        - name: "N8N_PROTOCOL"
+          value: "http"
+        - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+          value: "true"
+        - name: N8N_RUNNERS_ENABLED
+          value: "true"
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: "false"
+        - name: N8N_TEMPLATES_ENABLED
+          value: "false"
+        - name: N8N_VERSION_NOTIFICATIONS_ENABLED
+          value: "false"  
+        - name: EXTERNAL_FRONTEND_HOOKS_URLS
+          value: ""
+        - name: N8N_DIAGNOSTICS_CONFIG_FRONTEND
+          value: ""
+        - name: N8N_DIAGNOSTICS_CONFIG_BACKEND
+          value: ""
+        - name: N8N_BASIC_AUTH_ACTIVE
+          value: "true"
+        - name: N8N_BASIC_AUTH_USER
+          value: "n8n"
+        - name: N8N_BASIC_AUTH_PASSWORD
+          value: "n8n"
+        - name: N8N_ENCRYPTION_KEY
+          value: "n8n"
+        volumeMounts:
+        - name: n8n-config
+          mountPath: "/home/node/.n8n"
+        ports:
+        - name: http
+          containerPort: 5678
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+      volumes:
+      - name: n8n-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/n8n"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  selector:
+    app: n8n
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5678
+    protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: n8n-ingress
+  namespace: n8n
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`n8n-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: n8n
+          port: 80
+

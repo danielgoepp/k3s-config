@@ -1,0 +1,35 @@
+deployment:
+  kind: DaemonSet
+
+providers:
+  kubernetesCRD:
+    allowExternalNameServices: true
+
+  kubernetesIngress:
+    allowExternalNameServices: true
+
+ports:
+  traefik:
+    expose:
+      default: true
+  metrics:
+    expose:
+      default: true
+
+tlsStore:
+  default:
+    defaultCertificate:
+      secretName: wildcard-goepp-net-tls
+
+service:
+  spec:
+    loadBalancerIP: "10.230.1.102"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "300m"
+    memory: "512Mi"
+

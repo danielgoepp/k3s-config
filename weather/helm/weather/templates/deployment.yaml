@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.nodeSelector }}
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: weather
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- if .Values.deployment.resources }}
+        resources:
+          {{- if .Values.deployment.resources.requests }}
+          requests:
+            memory: {{ .Values.deployment.resources.requests.memory | default "16Mi" | quote }}
+            cpu: {{ .Values.deployment.resources.requests.cpu | default "100m" | quote }}
+          {{- else}}
+          requests:
+            memory: "16Mi"
+            cpu: "100m"
+          {{- end}}
+          {{- if .Values.deployment.resources.limits }}
+          limits:
+            memory: {{ .Values.deployment.resources.limits.memory | default "32Mi" | quote }}
+            cpu: {{ .Values.deployment.resources.limits.cpu | default "200m" | quote }}
+          {{- else}}  
+          limits:
+            memory: "32Mi"
+            cpu: "200m"
+          {{- end }}
+        {{- else }}
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "100m"
+          limits:
+            memory: "32Mi"
+            cpu: "200m"
+        {{- end}} 
+        securityContext:
+          privileged: true
+        envFrom:
+        - secretRef:
+            name: weather-secrets
+        args:
+        - "-R"
+        - "40"
+        - "-C"
+        - "customary"
+        - "-F"
+        - "mqtt://$(MQTT_HOST):$(MQTT_PORT),user=$(MQTT_USER),pass=$(MQTT_PASS),retain=1,devices=$(MQTT_TOPIC)"        
+        volumeMounts:
+        - name: {{ .Values.device.name }}
+          mountPath: {{ .Values.device.path }}
+      volumes:
+      - name: {{ .Values.device.name }}
+        hostPath:
+          path: {{ .Values.device.path }}

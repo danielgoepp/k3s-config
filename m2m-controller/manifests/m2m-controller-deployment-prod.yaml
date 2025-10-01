@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: management
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mqtt-config
+  namespace: management
+data:
+  MQTT_SERVER: "mosquitto-prod.goepp.net."
+  MQTT_PORT: "1883"
+  DEVICES: "BlueroomAir,GreatroomAir,StudioAir,BedroomAir"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: m2m-controller
+  namespace: management
+  labels:
+    app: m2m-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: m2m-controller
+  template:
+    metadata:
+      labels:
+        app: m2m-controller
+    spec:
+      containers:
+      - name: m2m-controller
+        image: danielgoepp/m2m-controller:latest
+        imagePullPolicy: Always
+        env:
+        - name: MQTT_SERVER
+          valueFrom:
+            configMapKeyRef:
+              name: mqtt-config
+              key: MQTT_SERVER
+        - name: MQTT_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: mqtt-config
+              key: MQTT_PORT
+        - name: DEVICES
+          valueFrom:
+            configMapKeyRef:
+              name: mqtt-config
+              key: DEVICES
+        - name: MQTT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mqtt-credentials
+              key: username
+        - name: MQTT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mqtt-credentials
+              key: password
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      restartPolicy: Always

@@ -1,0 +1,106 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kopia-b2
+  namespace: kopia
+  labels:
+    app: kopia-b2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: kopia-b2
+  template:
+    metadata:
+      labels:
+        app: kopia-b2
+    spec:
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: kopia-b2
+        image: kopia/kopia:latest
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        imagePullPolicy: Always
+        args:
+          - server
+          - start
+          - --disable-csrf-token-checks
+          - --address=0.0.0.0:51515
+          - --tls-cert-file=/tls/tls.crt
+          - --tls-key-file=/tls/tls.key
+        envFrom:
+        - secretRef:
+            name: kopia-secrets
+        env:
+        - name: TZ
+          value: America/New_York
+        ports:
+        - name: http
+          containerPort: 51515
+        volumeMounts:
+        - name: kopia-tls
+          mountPath: /tls
+        - name: kopia-config
+          mountPath: /app/config
+        - name: kopia-cache
+          mountPath: /app/cache
+        - name: kopia-logs
+          mountPath: /app/logs
+        - name: kopia-repository
+          mountPath: /repository
+        - name: kopia-data-homes
+          mountPath: /data/homes
+        - name: kopia-data-backups
+          mountPath: /data/backups
+      volumes:
+      - name: kopia-tls
+        secret:
+          secretName: wildcard-kopia-goepp-net-tls 
+      - name: kopia-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/kopia/b2/config"
+      - name: kopia-cache
+        hostPath:
+          path: "/mnt/k3s-prod-data/kopia/b2/cache"
+      - name: kopia-logs
+        hostPath:
+          path: "/mnt/k3s-prod-data/kopia/b2/logs"
+      - name: kopia-repository
+        emptyDir: {}
+      - name: kopia-data-homes
+        hostPath:
+          path: "/mnt/homes"
+      - name: kopia-data-backups
+        hostPath:
+          path: "/mnt/backups"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kopia-b2
+  namespace: kopia
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 10.1.11.53
+spec:
+  ports:
+  - port: 51515
+    targetPort: 51515
+    name: grpc
+    protocol: TCP
+  selector:
+    app: kopia-b2
+  type: LoadBalancer

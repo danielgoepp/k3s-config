@@ -1,0 +1,10 @@
+controller:
+  enabled: true
+  logLevel: warn
+
+speaker:
+  enabled: true
+  logLevel: warn
+  frr:
+    enabled: false
+

@@ -1,0 +1,15 @@
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx-prod
+  namespace: awx
+spec:
+  projects_existing_claim: awx-projects-claim
+  projects_persistence: true  
+  service_type: clusterip
+  ingress_type: ingress
+  hostname: awx-prod.goepp.net
+  ingress_class_name: traefik
+  ingress_annotations: |
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure

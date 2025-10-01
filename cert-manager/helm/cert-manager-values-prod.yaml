@@ -1,0 +1,5 @@
+global:
+  revisionHistoryLimit: 0
+
+crds:
+  enabled: true

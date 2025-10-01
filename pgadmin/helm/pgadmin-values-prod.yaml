@@ -1,0 +1,79 @@
+serverDefinitions:
+  enabled: true
+
+  servers:
+    1:
+      Name: "grafana-prod-rw"
+      Group: "Servers"
+      Port: 5432
+      Username: "grafana"
+      Host: "grafana-prod-rw.cnpg-grafana.svc.cluster.local"
+      SSLMode: "prefer"
+      MaintenanceDB: "grafana"
+      PassFile: "/var/lib/pgadmin/pgpass"
+    2:
+      Name: "homeassistant-prod-rw"
+      Group: "Servers"
+      Port: 5432
+      Username: "homeassistant"
+      Host: "homeassistant-prod-rw.cnpg-homeassistant.svc.cluster.local"
+      SSLMode: "prefer"
+      MaintenanceDB: "homeassistant"
+      PassFile: "/var/lib/pgadmin/pgpass"
+    3:
+      Name: "hertzbeat-prod-rw"
+      Group: "Servers"
+      Port: 5432
+      Username: "hertzbeat"
+      Host: "hertzbeat-prod-rw.cnpg-hertzbeat.svc.cluster.local"
+      SSLMode: "prefer"
+      MaintenanceDB: "hertzbeat"
+      PassFile: "/var/lib/pgadmin/pgpass"
+      
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  ingressClassName: traefik
+  hosts:
+    - host: pgadmin-prod.goepp.net
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+extraSecretMounts:
+- name: pgpassfile
+  secret: pgpassfile
+  subPath: pgpassfile
+  mountPath: "/tmp/pgpass"
+  readOnly: true
+
+VolumePermissions:
+  enabled: true
+
+extraInitContainers: |
+  - name: prepare-pgpass
+    image: docker.io/dpage/pgadmin4:9.0
+    command: [ 'sh', '-c', "cp /tmp/pgpass /var/lib/pgadmin/pgpass && chown pgadmin /var/lib/pgadmin/pgpass && chmod 600 /var/lib/pgadmin/pgpass " ]
+    volumeMounts:
+      - name: pgadmin-data
+        mountPath: /var/lib/pgadmin
+      - name: pgpassfile
+        secret: pgpassfile
+        subPath: pgpassfile
+        mountPath: "/tmp/pgpass"
+        readOnly: true
+    securityContext:
+      runAsUser: 0
+
+existingSecret: "pgadmin-secrets"
+secretKeys:
+  pgadminPasswordKey: password
+
+env:
+  email: dan@goepp.com
+  pgpassfile: "/var/lib/pgadmin/pgpass"
+
+persistentVolume:
+  enabled: false

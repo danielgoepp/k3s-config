@@ -1,0 +1,120 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config-graylog
+  namespace: telegraf
+data:
+  telegraf.conf: |-
+    [agent]
+      collection_jitter = "0s"
+      debug = false
+      flush_interval = "60s"
+      flush_jitter = "0s"
+      hostname = "${HOSTNAME}"
+      interval = "60s"
+      logfile = ""
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      omit_hostname = true
+      precision = ""
+      quiet = false
+      round_interval = true
+      skip_processors_after_aggregators = false
+
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "value"
+        data_type = "string"
+        topics = [
+          "mitsubishi2mqtt/+/availability",
+          "mitsubishi2mqtt/+/+/set",
+        ]
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "mitsubishi2mqtt/+/availability"
+            measurement = "measurement/_/_"
+            tags = "_/device_name/data_source"
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "mitsubishi2mqtt/+/+/set"
+            measurement = "measurement/_/_/_"
+            tags = "_/device_name/action/data_source"
+
+        [[processors.pivot]]
+            tagpass = { data_source = ["set"] }
+            tag_key = "action"
+            value_key = "value"
+
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "json_v2"
+        topics = [
+          "mitsubishi2mqtt/+/settings",
+          "mitsubishi2mqtt/+/state",
+        ]
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "mitsubishi2mqtt/+/+"
+            measurement = "measurement/_/_"
+            tags = "_/device_name/data_source"
+
+        [[inputs.mqtt_consumer.json_v2]]
+            measurement_name = "mitsubishi2mqtt"
+            [[inputs.mqtt_consumer.json_v2.object]]
+                path = "@this"
+
+    [[outputs.graylog]]
+        servers = [ "udp://graylog-prod.goepp.net.:12201"]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-graylog
+  namespace: telegraf
+  labels:
+    app: telegraf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: telegraf
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: telegraf-graylog
+        image: telegraf:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+        envFrom:
+          - secretRef:
+              name: telegraf-secrets
+        volumeMounts:
+        - name: telegraf-config
+          mountPath: /etc/telegraf
+      volumes:
+      - name: telegraf-config
+        configMap:
+          name: telegraf-config-graylog
+

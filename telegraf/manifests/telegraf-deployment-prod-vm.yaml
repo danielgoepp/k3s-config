@@ -1,0 +1,355 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config-vm
+  namespace: telegraf
+data:
+
+  mitsubishi_lookup.json: >-
+    {
+        "Greatroom Temperature": {
+            "target_topic": "mitsubishi2mqtt/GreatroomAir/remote_temp"
+        },
+        "Blue Room Temperature": {
+            "target_topic": "mitsubishi2mqtt/BlueroomAir/remote_temp"
+        },
+        "Yoga Temperature": {
+            "target_topic": "mitsubishi2mqtt/StudioAir/remote_temp"
+        },
+        "Bedroom Temperature": {
+            "target_topic": "mitsubishi2mqtt/BedroomAir/remote_temp"
+        }
+    }
+
+  telegraf.conf: |-
+    [agent]
+      collection_jitter = "0s"
+      debug = false
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      hostname = "${HOSTNAME}"
+      interval = "60s"
+      logfile = ""
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      omit_hostname = true
+      precision = ""
+      quiet = false
+      round_interval = true
+      skip_processors_after_aggregators = false
+
+    ##############################################################################
+    ## AirThings and ESP-CO2 metrics
+
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "value"
+        data_type = "float"
+        topics = [ "airthings/+/sensor/+/state" , "esp-co2/+/sensor/+/state" ]
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "airthings/+/sensor/+/state"
+            measurement = "measurement/_/_/_/_"
+            tags = "_/device/_/field/_"
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "esp-co2/+/sensor/+/state"
+            measurement = "measurement/_/_/_/_"
+            tags = "_/device/_/field/_"
+
+    ##############################################################################
+    ## Acurite metrics
+
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "value"
+        data_type = "auto_float"
+        topics = [ "weather/acurite/#" ]
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "weather/acurite/+/+"
+            measurement = "_/measurement/_/_"
+            tags = "_/_/device/field"
+
+    ##############################################################################
+    ## Zigbee metrics
+    
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "json_v2"
+        topics = [ "zigbee11/+", "zigbee15/+" ]
+
+        [[inputs.mqtt_consumer.json_v2]]
+            measurement_name = "zigbee"
+            [[inputs.mqtt_consumer.json_v2.object]]
+                path = "@this"
+                included_keys = [
+                    "voltage", 
+                    "battery",
+                    "device_temperature",
+                    "illuminance",
+                    "illuminance_lux",
+                    "humidity",
+                    "pressure",
+                    "temperature",
+                    "position",
+                    "tank_level",
+                    "current",
+                    "energy",
+                    "power",
+                    "linkquality",
+                ]
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "+/+"
+            tags = "coordinator/device"
+
+    ##############################################################################
+    ## Zigbee state
+
+    [[inputs.mqtt_consumer]]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        data_format = "json_v2"
+        topics = [ "zigbee11/+/availability", "zigbee15/+/availability" ]
+
+        [[inputs.mqtt_consumer.json_v2]]
+            measurement_name = "zigbee"
+            [[inputs.mqtt_consumer.json_v2.object]]
+                path = "@this"
+
+        [[inputs.mqtt_consumer.topic_parsing]]
+            topic = "+/+/availability"
+            tags = "coordinator/device/_"
+
+            
+    ##############################################################################
+    ## UPS metrics
+
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "mudderpi.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Leyden"
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "rockyledge.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Dummerston"
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "morgspi.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Warwick"
+    [[inputs.snmp]]
+        name_override = "ups"
+        agent_host_tag = "source"
+        agents = [ "udp://apc01.goepp.net.:161"]
+        community = "public"
+        [[inputs.snmp.field]]
+            name = "battery_capacity_percent"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.1.0"
+        [[inputs.snmp.field]]
+            name = "battery_temperature"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.2.0"
+        [[inputs.snmp.field]]
+            name = "battery_runtime_left"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.3.0"
+        [[inputs.snmp.field]]
+            name = "input_voltage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.3.2.1.0"
+        [[inputs.snmp.field]]
+            name = "input_frequency"
+            oid = ".1.3.6.1.4.1.318.1.1.1.3.2.4.0"
+        [[inputs.snmp.field]]
+            name = "output_voltage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.1.0"
+        [[inputs.snmp.field]]
+            name = "output_frequency"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.2.0"
+        [[inputs.snmp.field]]
+            name = "output_load_percentage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.3.0"
+        [[inputs.snmp.field]]
+            name = "output_load_amps"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.4.0"
+        [inputs.snmp.tags]
+            location = "Greenfield"
+
+    ##############################################################################
+    ## Processors
+
+    [[processors.rename]]
+        order = 1
+        namepass = ["esp-co2"]
+        [[processors.rename.replace]]
+            measurement = "esp-co2"
+            dest = "esp_co2"
+
+    [[processors.pivot]]
+        order = 2
+        namepass = ["acurite", "airthings", "esp_co2"]
+        tag_key = "field"
+        value_key = "value"
+
+    [[processors.filter]]
+        order = 3
+        namepass = ["acurite"]
+        default = "drop"
+
+        [[processors.filter.rule]]
+        fields = ["temperature_F", "humidity", "wind_avg_mi_h", "wind_dir_deg", "rain_in", "strike_count", "strike_distance", "uv", "lux", "battery_ok"]
+        tags = {"device" = ["Acurite-Atlas", "Acurite-Tower"]}
+        action = "pass"
+
+    [[processors.starlark]]
+        namepass = ["zigbee"]
+        order = 5
+        source = '''
+    load('math.star', 'math')
+
+    def apply(metric):
+        if "temperature" in metric.fields:
+            remote_temperature = Metric("remote_temperature")
+            remote_temperature.fields["set"] = math.round((metric.fields["temperature"] * 9.0 / 5.0 + 32.0)  * 100) / 100
+            remote_temperature.tags["device"] = metric.tags["device"]
+            return [metric, remote_temperature]
+    '''
+        [processors.starlark.tagpass]
+            device = [ "Blue Room Temperature", "Greatroom Temperature", "Bedroom Temperature", "Yoga Temperature" ]
+
+    [[processors.lookup]]
+        order = 6
+        namepass = ["remote_temperature"]
+        files = ["/etc/telegraf/mitsubishi_lookup.json"]
+        format = "json"
+        key = '{{ .Tag "device"}}'
+
+    [[processors.starlark]]
+        namepass = ["zigbee"]
+        order = 7
+        source = '''
+    load('math.star', 'math')
+
+    def apply(metric):
+        if "temperature" in metric.fields:
+            weather = Metric("weather")
+            sea_level_pressure = metric.fields["pressure"] * ( math.pow ( 1 - ( ( 0.0065 * 88 ) / ( metric.fields["temperature"] + ( 0.0065 * 88 ) + 273.15 ) ) , -5.257 ) * 0.029529 )
+            weather.fields["sea_level_pressure"] = math.round(sea_level_pressure * 100) / 100
+            weather.tags["device"] = metric.tags["device"]
+            return [weather, metric]
+    '''
+        [processors.starlark.tagpass]
+            device = [ "Greatroom Temperature" ]
+
+    [[processors.enum]]
+        namepass = ["zigbee"]
+        order = 8
+        [[processors.enum.mapping]]
+            field = "state"
+            [processors.enum.mapping.value_mappings]
+                "offline" = "0"
+                "online" = "1"
+
+    ##############################################################################
+    ## Output
+
+    # [[outputs.file]]
+    #     namedrop = ["remote_temperature"]
+    #     files = ["stdout"]
+    #     tagexclude = ["topic"]
+
+    [[outputs.influxdb_v2]]
+        namedrop = ["remote_temperature"]
+        urls = [ "http://vmsingle-vms-prod.victoriametrics.svc.cluster.local.:8429" ]
+        tagexclude = ["topic"]
+
+    [[outputs.mqtt]]
+        namepass = ["remote_temperature"]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        topic = '{{ .Tag "target_topic" }}'
+        qos = 0
+        retain = true
+        fieldinclude = ["set"]
+        layout = "field"
+
+    [[outputs.mqtt]]
+        namepass = ["weather"]
+        servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
+        username = "${MQTT_USERNAME}"
+        password = "${MQTT_PASSWORD}"
+        topic = "weather"
+        qos = 0
+        retain = true
+        fieldinclude = ["sea_level_pressure"]
+        layout = "field"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-vm
+  namespace: telegraf
+  labels:
+    app: telegraf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: telegraf
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: telegraf-vm
+        image: telegraf:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        envFrom:
+          - secretRef:
+              name: telegraf-secrets
+        volumeMounts:
+        - name: telegraf-config
+          mountPath: /etc/telegraf
+      volumes:
+      - name: telegraf-config
+        configMap:
+          name: telegraf-config-vm
+

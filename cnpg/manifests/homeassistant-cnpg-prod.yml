@@ -1,0 +1,93 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: homeassistant-prod
+  namespace: cnpg-homeassistant
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  instances: 2
+
+  storage:
+    size: 10Gi
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1024Mi"
+      cpu: "4"
+
+  postgresql:
+    parameters:
+      timezone: "America/New_York"
+
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://cnpgbackup/
+      endpointURL: https://minio-s3-prod.goepp.net
+      s3Credentials:
+        accessKeyId:
+          name: minio-creds
+          key: MINIO_ACCESS_KEY
+        secretAccessKey:
+          name: minio-creds
+          key: MINIO_SECRET_KEY
+    retentionPolicy: "1d"
+
+  ## Import from external cluster - this was the initial migration from the old cluster
+  bootstrap:
+    initdb:
+      database: homeassistant
+      owner: homeassistant
+  #     import:
+  #       type: microservice
+  #       databases:
+  #         - hass
+  #       source:
+  #         externalCluster: postgres16
+  # externalClusters:
+  #   - name: postgres16
+  #     connectionParameters:
+  #       host: postgres16-postgresql-ha-pgpool.postgres.svc.cluster.local
+  #       user: postgres
+  #       dbname: hass
+  #     password:
+  #       name: postgres-prod-admin
+  #       key: password
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: homeassistant-prod-backup
+  namespace: cnpg-homeassistant
+spec:
+  schedule: "0 0 0 * * *"
+  method: barmanObjectStore
+  immediate: true
+  cluster:
+    name: homeassistant-prod
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-prod-monitor
+  namespace: cnpg-homeassistant
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+  selector: 
+    matchLabels:
+      "cnpg.io/cluster": homeassistant-prod
+
+# ---
+# apiVersion: postgresql.cnpg.io/v1
+# kind: Backup
+# metadata:
+#   name: homeassistant-prod-backup
+# spec:
+#   cluster:
+#     name: homeassistant-prod

@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uptime-kuma
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uptime-kuma
+  namespace: uptime-kuma
+  labels:
+    app: uptime-kuma
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: uptime-kuma
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: uptime-kuma
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: uptime-kuma
+        image: louislam/uptime-kuma:1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+        volumeMounts:
+        - name: uptime-kuma-data
+          mountPath: /app/data
+        ports:
+        - name: http
+          containerPort: 3001
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3001
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3001
+      volumes:
+      - name: uptime-kuma-data
+        hostPath:
+          path: /mnt/k3s-prod-data/uptime-kuma
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uptime-kuma
+  namespace: uptime-kuma
+spec:
+  selector:
+    app: uptime-kuma
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3001
+    protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: uptime-kuma-ingress
+  namespace: uptime-kuma
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`uptime-kuma-prod.goepp.net`)
+      kind: Rule
+      services:
+        - name: uptime-kuma
+          port: 80

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  goepp.net.server: |
+    goepp.net.:53 {
+      log
+      forward . 10.1.11.1
+    }

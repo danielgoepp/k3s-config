@@ -1,0 +1,97 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zigbee2mqtt
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zigbee15
+  namespace: zigbee2mqtt
+  labels:
+    app: zigbee15
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: zigbee15
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: zigbee15
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: zigbee15
+        image: koenkk/zigbee2mqtt
+        imagePullPolicy: Always
+        env:
+        - name: TZ
+          value: "America/New_York"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        securityContext:
+          privileged: true
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+        volumeMounts:
+        - name: zigbee15-config
+          mountPath: /app/data
+      volumes:
+      - name: zigbee15-config
+        hostPath:
+          path: /mnt/k3s-prod-data/zigbee2mqtt/15
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zigbee15
+  namespace: zigbee2mqtt
+spec:
+  selector:
+    app: zigbee15
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: zigbee15-ingress
+  namespace: zigbee2mqtt
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`zigbee15.goepp.net`)
+      kind: Rule
+      services:
+        - name: zigbee15
+          port: 8080

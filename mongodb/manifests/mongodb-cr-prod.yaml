@@ -1,0 +1,56 @@
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: mongodb
+spec:
+  members: 3
+  type: ReplicaSet
+  version: "8.0.13"
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1000m"
+                  memory: "1Gi"
+  users:
+    - name: admin
+      db: admin
+      passwordSecretRef:
+        name: admin-user-password
+      roles:
+        - name: clusterAdmin
+          db: admin
+        - name: userAdminAnyDatabase
+          db: admin
+        - name: readWriteAnyDatabase
+          db: admin
+        - name: dbAdminAnyDatabase
+          db: admin
+      scramCredentialsSecretName: admin-scram
+    - name: graylog
+      db: graylog
+      passwordSecretRef:
+        name: graylog-secrets
+      roles:
+        - name: readWrite
+          db: graylog
+      scramCredentialsSecretName: graylog-secrets
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+    systemLog.quiet: true
+    ## None of this is having any effect, sadly
+    systemLog.component.accessControl.verbosity: -1
+    systemLog.component.command.verbosity: -1
+    systemLog.component.network.verbosity: -1
+    systemLog.component.query.verbosity: -1

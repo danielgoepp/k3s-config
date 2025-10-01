@@ -1,0 +1,196 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rhasspy
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wyoming-openwakeword
+  namespace: rhasspy
+  labels:
+    app: wyoming-openwakeword
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wyoming-openwakeword
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: wyoming-openwakeword
+    spec:
+      containers:
+      - name: wyoming-openwakeword
+        image: rhasspy/wyoming-openwakeword:1.10.0
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "16Mi"
+          limits:
+            cpu: "1000m"
+            memory: "64Mi"
+        args:
+        - --preload-model
+        - 'ok_nabu'
+        - --custom-model-dir
+        - /custom
+        volumeMounts:
+        - name: wyoming-openwakeword-config
+          mountPath: "/custom"
+        ports:
+        - name: http
+          containerPort: 10400
+      volumes:
+      - name: wyoming-openwakeword-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/rhasspy/wyoming-openwakeword"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wyoming-whisper
+  namespace: rhasspy
+  labels:
+    app: wyoming-whisper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wyoming-whisper
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: wyoming-whisper
+    spec:
+      containers:
+      - name: wyoming-whisper
+        image: rhasspy/wyoming-whisper:2.5.0
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        args:
+        - --model
+        - tiny-int8
+        - --language
+        - en
+        volumeMounts:
+        - name: wyoming-whisper-config
+          mountPath: "/data"
+        ports:
+        - name: http
+          containerPort: 10300
+      volumes:
+      - name: wyoming-whisper-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/rhasspy/wyoming-whisper"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wyoming-piper
+  namespace: rhasspy
+  labels:
+    app: wyoming-piper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wyoming-piper
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: wyoming-piper
+    spec:
+      containers:
+      - name: wyoming-piper
+        image: rhasspy/wyoming-piper:1.6.3
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        args:
+        - --voice
+        - en_US-lessac-medium
+        volumeMounts:
+        - name: wyoming-piper-config
+          mountPath: "/data"
+        ports:
+        - name: http
+          containerPort: 10200
+      volumes:
+      - name: wyoming-piper-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/rhasspy/wyoming-piper"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wyoming-openwakeword
+  namespace: rhasspy
+spec:
+  selector:
+    app: wyoming-openwakeword
+  type: ClusterIP
+  ports:
+  - name: wyoming-openwakeword-tcp
+    port: 10400
+    targetPort: 10400
+    protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wyoming-whisper
+  namespace: rhasspy
+spec:
+  selector:
+    app: wyoming-whisper
+  type: ClusterIP
+  ports:
+  - name: wyoming-whisper-tcp
+    port: 10300
+    targetPort: 10300
+    protocol: TCP
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wyoming-piper
+  namespace: rhasspy
+spec:
+  selector:
+    app: wyoming-piper
+  type: ClusterIP
+  ports:
+  - name: wyoming-piper-tcp
+    port: 10200
+    targetPort: 10200
+    protocol: TCP

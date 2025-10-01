@@ -1,0 +1,60 @@
+image:
+  repository: quay.io/prometheus/alertmanager
+  pullPolicy: Always
+  tag: ""
+
+extraArgs:
+  web.external-url: "https://alertmanager-prod.goepp.net"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  hosts:
+    - host: alertmanager-prod.goepp.net
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+persistence:
+  enabled: false
+  accessModes:
+    - ReadWriteOnce
+  size: 50Mi
+
+config:
+  enabled: true
+  global: 
+    smtp_smarthost: 'mail.goepp.net.:587'
+    smtp_from: 'woodpeckergoepp@gmail.com'
+    smtp_hello: 'alertmanager.goepp.net'
+    smtp_require_tls: false
+    resolve_timeout: 5m
+
+  templates:
+    - '/etc/alertmanager/*.tmpl'
+
+  receivers:
+    - name: 'team-goepp-mails'
+      email_configs:
+        - to: 'dan@goepp.com'
+          send_resolved: true
+
+  route:
+    receiver: 'team-goepp-mails'
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    group_by: [alertname, severity, instance]

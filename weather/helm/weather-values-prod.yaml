@@ -1,0 +1,19 @@
+image:
+  repository: hertzg/rtl_433
+  pullPolicy: IfNotPresent
+  tag: latest
+
+deployment:
+  resources:
+    requests:
+      memory: "32Mi"
+      cpu: "100m"
+    limits:
+      memory: "64Mi"
+      cpu: "200m" 
+
+nodeSelector: k3s-prod-13
+
+device:
+  name: ttyrtl
+  path: /dev/bus/usb/002/001

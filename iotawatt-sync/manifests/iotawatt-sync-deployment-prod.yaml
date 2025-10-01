@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: management
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iotawatt-sync
+  namespace: management
+  labels:
+    app: iotawatt-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: iotawatt-sync
+  template:
+    metadata:
+      labels:
+        app: iotawatt-sync
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: iotawatt-sync
+        image: danielgoepp/iotawatt-sync:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

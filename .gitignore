@@ -1,0 +1,16 @@
+.claude
+telegraf/.mqtt.env
+weather/manifests/weather-secrets.yaml
+*.code-workspace
+
+# Security: Secrets and sensitive files
+**/*secret*.yaml
+**/*secret*.yml
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example

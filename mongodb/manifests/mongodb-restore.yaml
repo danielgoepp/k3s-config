@@ -1,0 +1,45 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-restore
+  namespace: mongodb
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongodb-restore
+        image: docker.io/mongo:8.0.13
+        imagePullPolicy: IfNotPresent
+        env:
+              - name: HOSTNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: hostname
+              - name: USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: username
+              - name: PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: password
+              - name: DATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: graylog-secrets
+                    key: database
+        command: ["/bin/sh", "-c"]
+        args:
+          - /usr/bin/mongorestore --uri="mongodb+srv://$USERNAME:$PASSWORD@$HOSTNAME/$DATABASE?replicaSet=mongodb&ssl=false" --archive=/backups/mongodb/mongodb-2025-09-10.archive;
+        volumeMounts:
+        - name: backups
+          mountPath: /backups
+      restartPolicy: Never
+      volumes:
+      - name: backups
+        hostPath:
+          path: "/mnt/backups"
