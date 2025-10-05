@@ -5,7 +5,7 @@ metadata:
   name: homeassistant-prod
   namespace: cnpg-homeassistant
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
   instances: 2
 
   storage:

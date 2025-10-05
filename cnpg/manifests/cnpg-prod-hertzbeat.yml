@@ -5,7 +5,7 @@ metadata:
   name: hertzbeat-prod
   namespace: cnpg-hertzbeat
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:17.2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
   instances: 2
 
   storage:
