@@ -1,0 +1,128 @@
+---
+# Daily backup CronJob - runs at 2 AM
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: awx-backup-daily
+  namespace: awx
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid  # Prevent overlapping backups
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: awx-backup-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: create-backup
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              BACKUP_NAME="awx-backup-$(date +%Y%m%d-%H%M%S)"
+              cat <<EOF | kubectl apply -f -
+              apiVersion: awx.ansible.com/v1beta1
+              kind: AWXBackup
+              metadata:
+                name: ${BACKUP_NAME}
+                namespace: awx
+              spec:
+                deployment_name: awx-prod
+                backup_pvc: awx-backup-pvc
+                backup_pvc_namespace: awx
+              EOF
+              echo "Created backup: ${BACKUP_NAME}"
+
+              # Wait for backup to complete (max 30 minutes)
+              for i in $(seq 1 180); do
+                STATUS=$(kubectl get awxbackup ${BACKUP_NAME} -n awx -o jsonpath='{.status.backupClaim}' 2>/dev/null || echo "")
+                if [ -n "$STATUS" ]; then
+                  echo "Backup completed successfully"
+                  exit 0
+                fi
+                sleep 10
+              done
+              echo "Backup timed out after 30 minutes"
+              exit 1
+
+---
+# Cleanup CronJob - runs at 3 AM (after backups complete)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: awx-backup-cleanup
+  namespace: awx
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: awx-backup-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup-old-backups
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Cleaning up backups older than 3 days..."
+              CUTOFF_DATE=$(date -u -d '3 days ago' +%Y%m%d 2>/dev/null || date -u -v-3d +%Y%m%d)
+
+              # List all AWXBackup resources
+              kubectl get awxbackup -n awx -o name | while read backup; do
+                BACKUP_NAME=$(echo $backup | cut -d'/' -f2)
+
+                # Extract date from backup name (format: awx-backup-YYYYMMDD-HHMMSS)
+                BACKUP_DATE=$(echo $BACKUP_NAME | grep -oE '[0-9]{8}' | head -1)
+
+                if [ -n "$BACKUP_DATE" ] && [ "$BACKUP_DATE" -lt "$CUTOFF_DATE" ]; then
+                  echo "Deleting old backup: $BACKUP_NAME (date: $BACKUP_DATE)"
+                  kubectl delete awxbackup $BACKUP_NAME -n awx
+                else
+                  echo "Keeping backup: $BACKUP_NAME (date: $BACKUP_DATE)"
+                fi
+              done
+
+              echo "Cleanup complete"
+
+---
+# ServiceAccount with permissions to manage AWXBackup resources
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: awx-backup-sa
+  namespace: awx
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: awx-backup-role
+  namespace: awx
+rules:
+- apiGroups: ["awx.ansible.com"]
+  resources: ["awxbackups"]
+  verbs: ["get", "list", "create", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: awx-backup-rolebinding
+  namespace: awx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: awx-backup-role
+subjects:
+- kind: ServiceAccount
+  name: awx-backup-sa
+  namespace: awx

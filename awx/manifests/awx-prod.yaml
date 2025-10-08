@@ -30,7 +30,6 @@ spec:
   hostPath:
     path: "/mnt/k3s-prod-data/awx/projects"
 
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

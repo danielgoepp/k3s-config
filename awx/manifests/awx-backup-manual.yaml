@@ -1,0 +1,10 @@
+---
+apiVersion: awx.ansible.com/v1beta1
+kind: AWXBackup
+metadata:
+  name: awx-backup
+  namespace: awx
+spec:
+  deployment_name: awx-prod
+  backup_pvc: awx-backup-pvc
+  backup_pvc_namespace: awx
