@@ -23,6 +23,11 @@ spec:
     parameters:
       timezone: "America/New_York"
 
+  bootstrap:
+    initdb:
+      database: hertzbeat
+      owner: hertzbeat
+
   backup:
     barmanObjectStore:
       destinationPath: s3://cnpgbackup/
@@ -35,45 +40,6 @@ spec:
           name: minio-creds
           key: MINIO_SECRET_KEY
     retentionPolicy: "1d"
-
-  ## Import from external cluster - this was the initial migration from the old cluster
-  bootstrap:
-    initdb:
-      database: hertzbeat
-      owner: hertzbeat
-  #     import:
-  #       type: microservice
-  #       databases:
-  #         - hertzbeat
-  #       source:
-  #         externalCluster: postgres16
-  # externalClusters:
-  #   - name: postgres16
-  #     connectionParameters:
-  #       host: postgres16-postgresql-ha-pgpool.postgres.svc.cluster.local
-  #       user: postgres
-  #       dbname: hertzbeat
-  #     password:
-  #       name: postgres-prod-admin
-  #       key: password
-
-  ## Recovery from backup
-  # bootstrap:
-  #   recovery:
-  #     source: hertzbeat-prod
-  # externalClusters:
-  #   # Name has to match the cluster name
-  #   - name: hertzbeat-prod
-  #     barmanObjectStore:
-  #       destinationPath: s3://cnpgbackup/
-  #       endpointURL: https://minio-s3-prod.goepp.net
-  #       s3Credentials:
-  #         accessKeyId:
-  #           name: minio-creds
-  #           key: MINIO_ACCESS_KEY
-  #         secretAccessKey:
-  #           name: minio-creds
-  #           key: MINIO_SECRET_KEY
 
 ---
 apiVersion: postgresql.cnpg.io/v1
@@ -100,14 +66,3 @@ spec:
   selector: 
     matchLabels:
       "cnpg.io/cluster": hertzbeat-prod
-
-
-# ---
-# apiVersion: postgresql.cnpg.io/v1
-# kind: Backup
-# metadata:
-#   name: hertzbeat-prod-backup
-# spec:
-#   method: barmanObjectStore
-#   cluster:
-#     name: hertzbeat-prod

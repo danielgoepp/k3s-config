@@ -23,6 +23,11 @@ spec:
     parameters:
       timezone: "America/New_York"
 
+  bootstrap:
+    initdb:
+      database: homeassistant
+      owner: homeassistant
+
   backup:
     barmanObjectStore:
       destinationPath: s3://cnpgbackup/
@@ -35,27 +40,6 @@ spec:
           name: minio-creds
           key: MINIO_SECRET_KEY
     retentionPolicy: "1d"
-
-  ## Import from external cluster - this was the initial migration from the old cluster
-  bootstrap:
-    initdb:
-      database: homeassistant
-      owner: homeassistant
-  #     import:
-  #       type: microservice
-  #       databases:
-  #         - hass
-  #       source:
-  #         externalCluster: postgres16
-  # externalClusters:
-  #   - name: postgres16
-  #     connectionParameters:
-  #       host: postgres16-postgresql-ha-pgpool.postgres.svc.cluster.local
-  #       user: postgres
-  #       dbname: hass
-  #     password:
-  #       name: postgres-prod-admin
-  #       key: password
 
 ---
 apiVersion: postgresql.cnpg.io/v1
@@ -82,12 +66,3 @@ spec:
   selector: 
     matchLabels:
       "cnpg.io/cluster": homeassistant-prod
-
-# ---
-# apiVersion: postgresql.cnpg.io/v1
-# kind: Backup
-# metadata:
-#   name: homeassistant-prod-backup
-# spec:
-#   cluster:
-#     name: homeassistant-prod
