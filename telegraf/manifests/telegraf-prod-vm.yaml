@@ -266,7 +266,7 @@ data:
         namepass = ["zigbee"]
         order = 8
         [[processors.enum.mapping]]
-            field = "state"
+            fields = ["state"]
             [processors.enum.mapping.value_mappings]
                 "offline" = "0"
                 "online" = "1"
