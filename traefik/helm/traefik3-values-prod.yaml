@@ -51,6 +51,12 @@ ports:
       default: true
     exposedPort: 22000
     protocol: TCP
+  matter-ws-tcp:
+    port: 5580
+    expose:
+      default: true
+    exposedPort: 5580
+    protocol: TCP
 
 tlsStore:
   default:

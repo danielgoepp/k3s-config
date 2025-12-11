@@ -66,3 +66,38 @@ spec:
   - name: websocket
     port: 5580
     targetPort: 5580
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: matter-ingress
+  namespace: matter
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`matter-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: matter-server
+          port: 5580
+
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: matter-ingress-ws
+  namespace: matter
+spec:
+  entryPoints:
+    - matter-ws-tcp
+  routes:
+    - match: Host(`matter-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: matter-server
+          port: 5580
+
+
