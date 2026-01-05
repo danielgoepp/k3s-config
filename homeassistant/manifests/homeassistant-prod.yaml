@@ -50,10 +50,10 @@ spec:
         env:
         - name: TZ
           value: "America/New_York"
-        # - name: "PYTHONPATH"
-        #   value: "/config/deps"
-        # - name: PYTHONDONTWRITEBYTECODE
-        #   value: "1"
+        - name: PGID
+          value: "989"
+        - name: UMASK
+          value: "007"
         volumeMounts:
         - name: homeassistant-config
           mountPath: /config
@@ -95,26 +95,6 @@ spec:
     port: 8123
     targetPort: 8123
     protocol: TCP
-  # - name: homekit
-  #   port: 21064
-  #   targetPort: 21064
-  #   protocol: TCP
-
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: homeassistant-mdns
-#   namespace: homeassistant
-# spec:
-#   selector:
-#     app: homeassistant
-#   type: ClusterIP
-#   ports:
-#   - name: mdns
-#     port: 5353
-#     targetPort: 5353
-#     protocol: UDP
 
 ---
 apiVersion: traefik.io/v1alpha1
