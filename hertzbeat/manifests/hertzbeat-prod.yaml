@@ -25,13 +25,9 @@ spec:
       labels:
         app: hertzbeat
     spec:
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
       containers:
       - name: hertzbeat
-        image: apache/hertzbeat:1.7.2
+        image: apache/hertzbeat:nightly
         imagePullPolicy: Always
         resources:
           requests:
@@ -43,14 +39,14 @@ spec:
         ports:
         - name: http
           containerPort: 1157
-        # readinessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 1157
-        # livenessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 1157
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 1157
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 1157
         volumeMounts:
         - name: hertzbeat-data
           mountPath: /opt/hertzbeat/data
