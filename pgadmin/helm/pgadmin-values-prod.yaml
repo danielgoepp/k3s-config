@@ -20,16 +20,7 @@ serverDefinitions:
       SSLMode: "prefer"
       MaintenanceDB: "homeassistant"
       PassFile: "/var/lib/pgadmin/pgpass"
-    3:
-      Name: "hertzbeat-prod-rw"
-      Group: "Servers"
-      Port: 5432
-      Username: "hertzbeat"
-      Host: "hertzbeat-prod-rw.cnpg-hertzbeat.svc.cluster.local"
-      SSLMode: "prefer"
-      MaintenanceDB: "hertzbeat"
-      PassFile: "/var/lib/pgadmin/pgpass"
-      
+
 ingress:
   enabled: true
   annotations:
