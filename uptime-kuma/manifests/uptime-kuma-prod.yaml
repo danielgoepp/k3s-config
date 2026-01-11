@@ -43,6 +43,8 @@ spec:
         volumeMounts:
         - name: uptime-kuma-data
           mountPath: /app/data
+        - name: uptime-kuma-backups
+          mountPath: /app/backups
         ports:
         - name: http
           containerPort: 3001
@@ -58,6 +60,9 @@ spec:
       - name: uptime-kuma-data
         hostPath:
           path: /mnt/k3s-prod-data/uptime-kuma
+      - name: uptime-kuma-backups
+        hostPath:
+          path: /mnt/backups
 
 ---
 apiVersion: v1
