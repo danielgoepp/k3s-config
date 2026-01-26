@@ -40,7 +40,7 @@ data:
       skip_processors_after_aggregators = false
 
     ##############################################################################
-    ## AirThings and ESP-CO2 metrics
+    ## ESP-CO2 metrics
 
     [[inputs.mqtt_consumer]]
         servers = [ "tcp://mosquitto-prod.goepp.net.:1883" ]
@@ -48,12 +48,7 @@ data:
         password = "${MQTT_PASSWORD}"
         data_format = "value"
         data_type = "float"
-        topics = [ "airthings/+/sensor/+/state" , "esp-co2/+/sensor/+/state" ]
-
-        [[inputs.mqtt_consumer.topic_parsing]]
-            topic = "airthings/+/sensor/+/state"
-            measurement = "measurement/_/_/_/_"
-            tags = "_/device/_/field/_"
+        topics = [ "esp-co2/+/sensor/+/state" ]
 
         [[inputs.mqtt_consumer.topic_parsing]]
             topic = "esp-co2/+/sensor/+/state"
@@ -208,7 +203,7 @@ data:
 
     [[processors.pivot]]
         order = 2
-        namepass = ["acurite", "airthings", "esp_co2"]
+        namepass = ["acurite", "esp_co2"]
         tag_key = "field"
         value_key = "value"
 

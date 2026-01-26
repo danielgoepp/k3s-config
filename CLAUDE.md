@@ -42,7 +42,7 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 
 1. IoT sensors → MQTT (Mosquitto)
 2. Telegraf subscribes to MQTT topics:
-   - AirThings/ESP-CO2 sensors
+   - ESP-CO2 sensors
    - Acurite weather stations
    - Zigbee devices (via zigbee11/zigbee15 coordinators)
 3. Telegraf processes data (topic parsing, pivoting, Starlark processors)
