@@ -3,7 +3,7 @@ masterService: "opensearch-prod-cluster-master"
 
 image:
   repository: "opensearchproject/opensearch"
-  tag: "2.19.3"
+  tag: "2.19.4"
   pullPolicy: "Always"
 
 config:
