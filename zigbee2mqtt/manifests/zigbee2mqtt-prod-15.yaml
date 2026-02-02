@@ -31,7 +31,7 @@ spec:
             value: "1"
       containers:
       - name: zigbee15
-        image: koenkk/zigbee2mqtt
+        image: koenkk/zigbee2mqtt:latest
         imagePullPolicy: Always
         env:
         - name: TZ
