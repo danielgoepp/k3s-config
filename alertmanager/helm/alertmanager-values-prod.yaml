@@ -52,9 +52,33 @@ config:
         - to: 'dan@goepp.com'
           send_resolved: true
 
+    - name: awx-webhook-reboot-mudderpi
+      webhook_configs:
+        - url: "https://awx-prod.goepp.net/api/v2/job_templates/43/launch/"
+          http_config:
+            authorization:
+              type: Bearer
+              credentials: "5Az1scNFEDy8i3QXXBb5kxKUjwkzuu"
+          send_resolved: false
+
   route:
     receiver: 'team-goepp-mails'
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 4h
     group_by: [alertname, severity, instance]
+
+    routes:
+      # - matchers:
+      #     - alertname="MudderPi Reboot Required"
+      #   group_by: ["alertname", "location"]
+      #   receiver: awx-webhook-reboot-mudderpi
+      #   repeat_interval: 24h
+
+      - matchers:
+          - alertname="UPS Input Voltage - Data Collection Per Location"
+          - location="Leyden"
+          # - location=~"Leyden|Greenfield|Warwick"
+        group_by: ["alertname", "location"]
+        receiver: awx-webhook-reboot-mudderpi
+        repeat_interval: 24h
