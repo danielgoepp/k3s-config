@@ -196,3 +196,22 @@ spec:
         key: token
       labels:
         group: "homeassistant"
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: vmscrapeconfig-homeassistant-mudderpi
+  namespace: victoriametrics
+spec:
+  scheme: "https"
+  tlsConfig:
+    insecureSkipVerify: true
+  path: /api/prometheus
+  bearerTokenSecret:
+    name: homeassistant-mudderpi-token
+    key: token
+  staticConfigs:
+    - targets: ["mudderpi-ha.goepp.net.:443"]
+      labels:
+        group: "homeassistant"
