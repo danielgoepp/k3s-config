@@ -49,13 +49,15 @@ spec:
         - name: mqtt-tcp
           containerPort: 1883
       volumes:
-      - name: mosquitto-config
-        configMap:
-          name: mosquitto-config
+      # - name: mosquitto-config
+      #   configMap:
+      #     name: mosquitto-config
       - name: mosquitto-data
         hostPath:
-          path: "/mnt/k3s-prod-data/mosquitto"
-
+          path: "/mnt/k3s-prod-data/mosquitto/data"
+      - name: mosquitto-config
+        hostPath:
+          path: "/mnt/k3s-prod-data/mosquitto/config"
 ---
 apiVersion: v1
 kind: Service
