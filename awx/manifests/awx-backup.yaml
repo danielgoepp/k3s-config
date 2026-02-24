@@ -66,9 +66,14 @@ spec:
         spec:
           serviceAccountName: awx-backup-sa
           restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 0
           containers:
           - name: cleanup-old-backups
             image: bitnami/kubectl:latest
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
             command:
             - /bin/sh
             - -c
@@ -76,22 +81,39 @@ spec:
               echo "Cleaning up backups older than 3 days..."
               CUTOFF_DATE=$(date -u -d '3 days ago' +%Y%m%d 2>/dev/null || date -u -v-3d +%Y%m%d)
 
-              # List all AWXBackup resources
+              # Clean up AWXBackup CRD objects
               kubectl get awxbackup -n awx -o name | while read backup; do
                 BACKUP_NAME=$(echo $backup | cut -d'/' -f2)
-
-                # Extract date from backup name (format: awx-backup-YYYYMMDD-HHMMSS)
                 BACKUP_DATE=$(echo $BACKUP_NAME | grep -oE '[0-9]{8}' | head -1)
 
                 if [ -n "$BACKUP_DATE" ] && [ "$BACKUP_DATE" -lt "$CUTOFF_DATE" ]; then
-                  echo "Deleting old backup: $BACKUP_NAME (date: $BACKUP_DATE)"
+                  echo "Deleting old backup CRD: $BACKUP_NAME (date: $BACKUP_DATE)"
                   kubectl delete awxbackup $BACKUP_NAME -n awx
                 else
-                  echo "Keeping backup: $BACKUP_NAME (date: $BACKUP_DATE)"
+                  echo "Keeping backup CRD: $BACKUP_NAME (date: $BACKUP_DATE)"
+                fi
+              done
+
+              # Clean up backup files from PVC
+              echo "Cleaning up backup directories older than 3 days..."
+              for dir in /backups/tower-openshift-backup-*; do
+                [ -d "$dir" ] || continue
+                DIR_NAME=$(basename "$dir")
+                DIR_DATE=$(echo "$DIR_NAME" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 | tr -d '-')
+
+                if [ -n "$DIR_DATE" ] && [ "$DIR_DATE" -lt "$CUTOFF_DATE" ]; then
+                  echo "Deleting old backup dir: $DIR_NAME (date: $DIR_DATE)"
+                  rm -rf "$dir"
+                else
+                  echo "Keeping backup dir: $DIR_NAME (date: $DIR_DATE)"
                 fi
               done
 
               echo "Cleanup complete"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: awx-backup-pvc
 
 ---
 # ServiceAccount with permissions to manage AWXBackup resources
