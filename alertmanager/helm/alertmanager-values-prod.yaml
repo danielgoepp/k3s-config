@@ -52,6 +52,14 @@ config:
         - to: 'dan@goepp.com'
           send_resolved: true
 
+    - name: 'zigbee-offline-mails'
+      email_configs:
+        - to: 'dan@goepp.com'
+          send_resolved: true
+          headers:
+            Subject: '{{ template "custom.subject" . }}'
+          text: '{{ template "custom.body" . }}'
+
     - name: awx-webhook-reboot-mudderpi
       webhook_configs:
         - url: "https://awx-prod.goepp.net/api/v2/job_templates/43/launch/"
@@ -69,6 +77,12 @@ config:
     group_by: [alertname, severity, instance]
 
     routes:
+      - matchers:
+          - alertname="Zigbee - Device Offline"
+        group_by: ["alertname"]
+        receiver: zigbee-offline-mails
+        repeat_interval: 4h
+
       # - matchers:
       #     - alertname="MudderPi Reboot Required"
       #   group_by: ["alertname", "location"]
@@ -82,3 +96,25 @@ config:
         group_by: ["alertname", "location"]
         receiver: awx-webhook-reboot-mudderpi
         repeat_interval: 24h
+
+templateFiles:
+  custom.tmpl: |-
+    {{ define "custom.subject" -}}
+    [{{ .Status | toUpper }}:{{ if eq .Status "firing" }}{{ .Alerts.Firing | len }}{{ else }}{{ .Alerts.Resolved | len }}{{ end }}] {{ .GroupLabels.alertname }}{{ range .Alerts }}{{ if .Labels.device }} - {{ .Labels.device }}{{ end }}{{ end }}
+    {{- end }}
+
+    {{ define "custom.body" -}}
+    {{ if .Alerts.Firing -}}
+    Firing:
+    {{ range .Alerts.Firing -}}
+    - {{ if .Labels.device }}{{ .Labels.device }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Labels.coordinator }} (coordinator: {{ .Labels.coordinator }}){{ end }}
+      {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
+    {{ end }}
+    {{- end }}
+    {{ if .Alerts.Resolved -}}
+    Resolved:
+    {{ range .Alerts.Resolved -}}
+    - {{ if .Labels.device }}{{ .Labels.device }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Labels.coordinator }} (coordinator: {{ .Labels.coordinator }}){{ end }}
+    {{ end }}
+    {{- end }}
+    {{- end }}
