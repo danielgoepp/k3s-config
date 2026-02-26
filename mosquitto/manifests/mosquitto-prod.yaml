@@ -48,6 +48,9 @@ spec:
         ports:
         - name: mqtt-tcp
           containerPort: 1883
+        env:
+          - name: TZ
+            value: "America/New_York"
       volumes:
       # - name: mosquitto-config
       #   configMap:
