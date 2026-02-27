@@ -60,6 +60,14 @@ config:
             Subject: '{{ template "custom.subject" . }}'
           text: '{{ template "custom.body" . }}'
 
+    - name: 'co2-alert-mails'
+      email_configs:
+        - to: 'dan@goepp.com'
+          send_resolved: true
+          headers:
+            Subject: '{{ template "co2.subject" . }}'
+          text: '{{ template "co2.body" . }}'
+
     - name: awx-webhook-reboot-mudderpi
       webhook_configs:
         - url: "https://awx-prod.goepp.net/api/v2/job_templates/43/launch/"
@@ -83,6 +91,12 @@ config:
         receiver: zigbee-offline-mails
         repeat_interval: 4h
 
+      - matchers:
+          - alertname=~".*CO2.*"
+        group_by: ["alertname"]
+        receiver: co2-alert-mails
+        repeat_interval: 4h
+
       # - matchers:
       #     - alertname="MudderPi Reboot Required"
       #   group_by: ["alertname", "location"]
@@ -97,7 +111,7 @@ config:
         receiver: awx-webhook-reboot-mudderpi
         repeat_interval: 24h
 
-templateFiles:
+templates:
   custom.tmpl: |-
     {{ define "custom.subject" -}}
     [{{ .Status | toUpper }}:{{ if eq .Status "firing" }}{{ .Alerts.Firing | len }}{{ else }}{{ .Alerts.Resolved | len }}{{ end }}] {{ .GroupLabels.alertname }}{{ range .Alerts }}{{ if .Labels.device }} - {{ .Labels.device }}{{ end }}{{ end }}
@@ -115,6 +129,25 @@ templateFiles:
     Resolved:
     {{ range .Alerts.Resolved -}}
     - {{ if .Labels.device }}{{ .Labels.device }}{{ else }}{{ .Labels.alertname }}{{ end }}{{ if .Labels.coordinator }} (coordinator: {{ .Labels.coordinator }}){{ end }}
+    {{ end }}
+    {{- end }}
+    {{- end }}
+
+    {{ define "co2.subject" -}}
+    [{{ .Status | toUpper }}:{{ if eq .Status "firing" }}{{ .Alerts.Firing | len }}{{ else }}{{ .Alerts.Resolved | len }}{{ end }}] {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+    {{- end }}
+
+    {{ define "co2.body" -}}
+    {{ if .Alerts.Firing -}}
+    Firing:
+    {{ range .Alerts.Firing -}}
+    - {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}{{ if .Labels.device }} ({{ .Labels.device }}){{ end }}
+    {{ end }}
+    {{- end }}
+    {{ if .Alerts.Resolved -}}
+    Resolved:
+    {{ range .Alerts.Resolved -}}
+    - {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}{{ if .Labels.device }} ({{ .Labels.device }}){{ end }}
     {{ end }}
     {{- end }}
     {{- end }}
