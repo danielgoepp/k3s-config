@@ -50,10 +50,6 @@ spec:
         env:
         - name: TZ
           value: "America/New_York"
-        - name: PGID
-          value: "989"
-        - name: UMASK
-          value: "007"
         volumeMounts:
         - name: homeassistant-config
           mountPath: /config
