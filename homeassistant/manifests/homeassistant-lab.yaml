@@ -36,8 +36,6 @@ spec:
         image: ghcr.io/home-assistant/home-assistant:stable
         imagePullPolicy: Always
         securityContext:
-          # runAsUser: 1000
-          # runAsGroup: 989
           capabilities:
             add:
               - NET_ADMIN
@@ -52,8 +50,6 @@ spec:
         env:
         - name: TZ
           value: "America/New_York"
-        # - name: PYTHONPATH
-        #   value: "/config/deps:/usr/local/lib/python3.14/site-packages"
         volumeMounts:
         - name: homeassistant-config
           mountPath: /config
