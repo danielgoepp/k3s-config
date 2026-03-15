@@ -104,6 +104,10 @@ config:
 
 templates:
   custom.tmpl: |-
+    {{ define "__subject" -}}
+    [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }}
+    {{- end }}
+
     {{ define "custom.subject" -}}
     [{{ .Status | toUpper }}:{{ if eq .Status "firing" }}{{ .Alerts.Firing | len }}{{ else }}{{ .Alerts.Resolved | len }}{{ end }}] {{ .GroupLabels.alertname }}{{ range .Alerts }}{{ if .Labels.device }} - {{ .Labels.device }}{{ end }}{{ end }}
     {{- end }}
