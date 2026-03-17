@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telegraf-config-graylog
+  name: telegraf-mqtt-to-graylog-config
   namespace: telegraf
 data:
   telegraf.conf: |-
@@ -75,29 +75,29 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: telegraf-graylog
+  name: telegraf-mqtt-to-graylog
   namespace: telegraf
   labels:
-    app: telegraf
+    app: telegraf-mqtt-to-graylog
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: telegraf
+      app: telegraf-mqtt-to-graylog
   revisionHistoryLimit: 0
   template:
     metadata:
       labels:
-        app: telegraf
+        app: telegraf-mqtt-to-graylog
     spec:
       dnsConfig:
         options:
           - name: ndots
             value: "1"
       containers:
-      - name: telegraf-graylog
+      - name: telegraf-mqtt-to-graylog
         image: telegraf:latest
         imagePullPolicy: Always
         resources:
@@ -111,10 +111,10 @@ spec:
           - secretRef:
               name: telegraf-secrets
         volumeMounts:
-        - name: telegraf-config
+        - name: telegraf-mqtt-to-graylog-config
           mountPath: /etc/telegraf
       volumes:
-      - name: telegraf-config
+      - name: telegraf-mqtt-to-graylog-config
         configMap:
-          name: telegraf-config-graylog
+          name: telegraf-mqtt-to-graylog-config
 

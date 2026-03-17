@@ -1,0 +1,144 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-upsd-to-vms-config
+  namespace: telegraf
+data:
+
+  telegraf.conf: |-
+    [agent]
+      collection_jitter = "0s"
+      debug = false
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      hostname = "${HOSTNAME}"
+      interval = "60s"
+      logfile = ""
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      omit_hostname = true
+      precision = ""
+      quiet = false
+      round_interval = true
+      skip_processors_after_aggregators = false
+
+    ##############################################################################
+    ## UPS metrics
+
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "mudderpi.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Leyden"
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "rockyledge.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Dummerston"
+    [[inputs.upsd]]
+        name_override = "ups"
+        force_float = true
+        password = "password"
+        port = 3493
+        server = "morgspi.goepp.net."
+        username = "upsmon"
+        [inputs.upsd.tags]
+            location = "Warwick"
+    [[inputs.snmp]]
+        name_override = "ups"
+        timeout = "5s"
+        retries = 1
+        agent_host_tag = "source"
+        agents = [ "udp://apc01.goepp.net.:161"]
+        community = "public"
+        [[inputs.snmp.field]]
+            name = "battery_capacity_percent"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.1.0"
+        [[inputs.snmp.field]]
+            name = "battery_temperature"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.2.0"
+        [[inputs.snmp.field]]
+            name = "battery_runtime_left"
+            oid = ".1.3.6.1.4.1.318.1.1.1.2.2.3.0"
+        [[inputs.snmp.field]]
+            name = "input_voltage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.3.2.1.0"
+        [[inputs.snmp.field]]
+            name = "input_frequency"
+            oid = ".1.3.6.1.4.1.318.1.1.1.3.2.4.0"
+        [[inputs.snmp.field]]
+            name = "output_voltage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.1.0"
+        [[inputs.snmp.field]]
+            name = "output_frequency"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.2.0"
+        [[inputs.snmp.field]]
+            name = "output_load_percentage"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.3.0"
+        [[inputs.snmp.field]]
+            name = "output_load_amps"
+            oid = ".1.3.6.1.4.1.318.1.1.1.4.2.4.0"
+        [inputs.snmp.tags]
+            location = "Greenfield"
+
+    ##############################################################################
+    ## Output
+
+    [[outputs.influxdb_v2]]
+        urls = [ "http://vmsingle-vms-prod.victoriametrics.svc.cluster.local.:8429" ]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-upsd-to-vms
+  namespace: telegraf
+  labels:
+    app: telegraf-upsd-to-vms
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: telegraf-upsd-to-vms
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: telegraf-upsd-to-vms
+    spec:
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+      - name: telegraf-upsd-to-vms
+        image: telegraf:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        envFrom:
+          - secretRef:
+              name: telegraf-secrets
+        volumeMounts:
+        - name: telegraf-upsd-to-vms-config
+          mountPath: /etc/telegraf
+      volumes:
+      - name: telegraf-upsd-to-vms-config
+        configMap:
+          name: telegraf-upsd-to-vms-config
