@@ -6,6 +6,8 @@ metadata:
   namespace: kopia
   labels:
     app: kopia-b2
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
