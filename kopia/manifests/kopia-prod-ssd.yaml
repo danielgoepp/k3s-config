@@ -52,6 +52,22 @@ spec:
         ports:
         - name: http
           containerPort: 51515
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "curl -sk -o /dev/null -w '%{http_code}' https://localhost:51515/ | grep -qE '^[0-9]+$'"
+          initialDelaySeconds: 15
+          periodSeconds: 60
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "curl -sk -o /dev/null -w '%{http_code}' https://localhost:51515/ | grep -qE '^[0-9]+$'"
+          initialDelaySeconds: 5
+          periodSeconds: 60
         volumeMounts:
         - name: kopia-tls
           mountPath: /tls
