@@ -83,6 +83,8 @@ spec:
           mountPath: /data/homes
         - name: kopia-data-backups
           mountPath: /data/backups
+        - name: kopia-data-k3s-prod
+          mountPath: /data/k3s-prod
       volumes:
       - name: kopia-tls
         secret:
@@ -104,6 +106,9 @@ spec:
       - name: kopia-data-backups
         hostPath:
           path: "/mnt/backups"
+      - name: kopia-data-k3s-prod
+        hostPath:
+          path: "/mnt/k3s-prod-data"
 
 ---
 apiVersion: v1
