@@ -123,3 +123,62 @@ spec:
             path: "/mnt/k3s-prod-data/openclaw"
         - name: tmp-volume
           emptyDir: {}
+
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: openclaw-ws-headers
+#   namespace: openclaw
+# spec:
+#   headers:
+#     customRequestHeaders:
+#       X-Forwarded-Proto: "https"
+
+# ---
+# apiVersion: traefik.io/v1alpha1
+# kind: ServersTransport
+# metadata:
+#   name: openclaw-transport
+#   namespace: openclaw
+# spec:
+#   forwardingTimeouts:
+#     dialTimeout: 30s
+#     responseHeaderTimeout: 0s   # 0 = no timeout, important for WS
+#     idleConnTimeout: 90s
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw
+  namespace: openclaw
+spec:
+  type: ClusterIP
+  selector:
+    app: openclaw
+  ports:
+    - name: gateway
+      port: 18789
+      targetPort: 18789
+      protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: openclaw-ingress
+  namespace: openclaw
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`openclaw-prod.goepp.net`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: openclaw
+          port: 18789
+          # passHostHeader: true
+          # serversTransport: openclaw-transport
+      # middlewares:
+      #   - name: openclaw-ws-headers
