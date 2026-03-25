@@ -90,7 +90,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`zigbee11.goepp.net`)
+    - match: Host(`zigbee11.goepp.net`) && PathPrefix(`/`)
       kind: Rule
       services:
         - name: zigbee11

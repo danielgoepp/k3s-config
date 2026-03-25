@@ -90,7 +90,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`uptime-kuma-prod.goepp.net`)
+    - match: Host(`uptime-kuma-prod.goepp.net`) && PathPrefix(`/`)
       kind: Rule
       services:
         - name: uptime-kuma
