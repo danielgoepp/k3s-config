@@ -214,7 +214,7 @@ data:
     [unifi.defaults]
       # URL for the UniFi Controller. Do not add any paths after the host:port.
       # Do not use port 8443 if you have a UDM; just use "https://ip".
-      url = "https://ui-network.goepp.net:8443"
+      url = "https://ui-network.goepp.net:11443"
 
       # Make a read-only user in the UniFi Admin Settings, allow it access to all sites.
       # user = "unifipoller"
