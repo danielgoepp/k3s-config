@@ -32,12 +32,42 @@ spec:
 
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: awx-backups-pv
+  labels:
+    type: local
+spec:
+  storageClassName: awx-backups-volume
+  capacity:
+    storage: 5Gi # This is a placeholder; K3s local-path doesn't enforce size
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/k3s-prod-data/awx/backups"
+
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: awx-projects-claim
   namespace: awx
 spec:
   storageClassName: awx-projects-volume
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: awx-backups-claim
+  namespace: awx
+spec:
+  storageClassName: awx-backups-volume
   accessModes:
     - ReadWriteOnce
   resources:
