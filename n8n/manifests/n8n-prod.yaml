@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: n8n
-        image: n8nio/n8n:latest
+        image: n8nio/n8n:2.17.2
         imagePullPolicy: Always
         resources:
           requests:
@@ -51,7 +51,7 @@ spec:
           value: "http"
         - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
           value: "true"
-        - name: N8N_RUNNERS_ENABLED
+        - name: N8N_MIGRATE_FS_STORAGE_PATH
           value: "true"
         - name: N8N_DIAGNOSTICS_ENABLED
           value: "false"
