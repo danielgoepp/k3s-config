@@ -88,7 +88,7 @@ spec:
             value: "1"
       containers:
       - name: grafana
-        image: grafana/grafana:12.1.1-ubuntu
+        image: grafana/grafana:13.0.1-ubuntu
         imagePullPolicy: Always
         env:
           - name: GF_INSTALL_PLUGINS
