@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: birdnet
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: birdnet
+  namespace: birdnet
+spec:
+  type: ExternalName
+  externalName: probepi.goepp.net
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: birdnet-ingress
+  namespace: birdnet
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`birdnet.goepp.net`)
+      kind: Rule
+      services:
+        - name: birdnet
+          port: 80
+          passHostHeader: false
+  tls:
+    secretName: wildcard-goepp-net-tls
