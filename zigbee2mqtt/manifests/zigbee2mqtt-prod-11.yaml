@@ -31,8 +31,8 @@ spec:
             value: "1"
       containers:
       - name: zigbee11
-        image: koenkk/zigbee2mqtt:latest
-        imagePullPolicy: Always
+        image: koenkk/zigbee2mqtt:2.9.2
+        imagePullPolicy: IfNotPresent
         env:
         - name: TZ
           value: "America/New_York"

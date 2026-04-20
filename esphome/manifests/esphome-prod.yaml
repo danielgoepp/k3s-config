@@ -27,8 +27,8 @@ spec:
     spec:
       containers:
       - name: esphome
-        image: esphome/esphome:latest
-        imagePullPolicy: Always
+        image: esphome/esphome:2026.4.1
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

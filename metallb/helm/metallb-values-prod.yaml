@@ -198,8 +198,8 @@ controller:
   # webhookMode: enabled
   image:
     repository: quay.io/metallb/controller
-    tag:
-    pullPolicy:
+    tag: 0.15.2
+    pullPolicy: IfNotPresent
   ## @param controller.updateStrategy.type Metallb controller deployment strategy type.
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
   ## e.g:
@@ -265,8 +265,8 @@ speaker:
     enabled: true
   image:
     repository: quay.io/metallb/speaker
-    tag:
-    pullPolicy:
+    tag: 0.15.2
+    pullPolicy: IfNotPresent
   ## @param speaker.updateStrategy.type Speaker daemonset strategy type
   ## ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/
   ##
