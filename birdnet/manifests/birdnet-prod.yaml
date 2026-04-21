@@ -29,7 +29,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`birdnet.goepp.net`)
+    - match: Host(`birdnet.goepp.net`) or Host(`birdnet-prod.goepp.net`)
       kind: Rule
       services:
         - name: birdnet
