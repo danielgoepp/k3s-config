@@ -89,7 +89,7 @@ spec:
       containers:
       - name: grafana
         image: grafana/grafana:13.0.1-ubuntu
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
           - name: GF_INSTALL_PLUGINS
             value: "victoriametrics-metrics-datasource 0.23.4"

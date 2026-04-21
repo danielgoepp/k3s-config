@@ -32,7 +32,7 @@ spec:
       containers:
       - name: uptime-kuma
         image: louislam/uptime-kuma:2.2.1
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

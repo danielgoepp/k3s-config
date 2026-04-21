@@ -28,7 +28,7 @@ spec:
       containers:
       - name: syncthing
         image: syncthing/syncthing:2.0.16
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

@@ -124,7 +124,7 @@ spec:
       containers:
       - name: telegraf-upsd-to-vms
         image: telegraf:1.38.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "50m"

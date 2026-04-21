@@ -20,5 +20,5 @@ spec:
           containers:
           - name: propane-sync
             image: danielgoepp/propane-sync:latest
-            imagePullPolicy: Always
+            imagePullPolicy: IfNotPresent
           restartPolicy: Never

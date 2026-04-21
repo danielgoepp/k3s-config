@@ -99,7 +99,7 @@ spec:
       containers:
       - name: telegraf-mqtt-to-graylog
         image: telegraf:1.38.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

@@ -34,7 +34,7 @@ spec:
       containers:
       - name: homeassistant-lab
         image: ghcr.io/home-assistant/home-assistant:stable
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           capabilities:
             add:

@@ -28,7 +28,7 @@ spec:
       containers:
       - name: wyoming-openwakeword
         image: rhasspy/wyoming-openwakeword:1.10.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"
@@ -76,7 +76,7 @@ spec:
       containers:
       - name: wyoming-whisper
         image: rhasspy/wyoming-whisper:2.5.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"
@@ -124,7 +124,7 @@ spec:
       containers:
       - name: wyoming-piper
         image: rhasspy/wyoming-piper:1.6.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

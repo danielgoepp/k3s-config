@@ -27,7 +27,7 @@ spec:
       containers:
       - name: otbr
         image: bnutzer/otbr-tcp
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

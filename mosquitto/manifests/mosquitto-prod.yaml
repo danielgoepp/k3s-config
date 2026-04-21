@@ -32,7 +32,7 @@ spec:
       containers:
       - name: mosquitto
         image: eclipse-mosquitto:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

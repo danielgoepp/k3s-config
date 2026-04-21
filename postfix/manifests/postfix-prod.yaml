@@ -32,7 +32,7 @@ spec:
       containers:
       - name: postfix
         image: boky/postfix:5.1.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

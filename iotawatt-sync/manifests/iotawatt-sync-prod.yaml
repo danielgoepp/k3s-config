@@ -32,7 +32,7 @@ spec:
       containers:
       - name: iotawatt-sync
         image: danielgoepp/iotawatt-sync:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

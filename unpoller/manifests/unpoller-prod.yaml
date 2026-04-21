@@ -32,7 +32,7 @@ spec:
       containers:
       - name: unpoller
         image: ghcr.io/unpoller/unpoller:v2.39.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

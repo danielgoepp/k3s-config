@@ -33,7 +33,7 @@ spec:
       containers:
       - name: music-assistant
         image: ghcr.io/music-assistant/server:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

@@ -28,7 +28,7 @@ spec:
       containers:
       - name: graylog
         image: graylog/graylog:7.0
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"

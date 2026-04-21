@@ -32,7 +32,7 @@ spec:
       containers:
       - name: homeassistant
         image: ghcr.io/home-assistant/home-assistant:2026.4.3
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         resources:
           requests:
             cpu: "100m"
