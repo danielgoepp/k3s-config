@@ -123,7 +123,7 @@ spec:
             value: "1"
       containers:
       - name: telegraf-upsd-to-vms
-        image: telegraf:latest
+        image: telegraf:1.38.1
         imagePullPolicy: Always
         resources:
           requests:
