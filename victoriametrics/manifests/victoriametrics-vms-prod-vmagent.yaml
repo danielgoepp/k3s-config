@@ -13,8 +13,8 @@ metadata:
 spec:
   image:
     repository: victoriametrics/vmagent
-    tag: v1.127.0
-    pullPolicy: Always
+    tag: v1.140.0
+    pullPolicy: IfNotPresent
   selectAllByDefault: true
   replicaCount: 1
   scrapeInterval: 30s
