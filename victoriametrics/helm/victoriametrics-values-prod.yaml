@@ -1,3 +1,7 @@
+image:
+  tag: "0.68.4"
+  pullPolicy: IfNotPresent
+
 operator:
   disable_prometheus_converter: true
 
