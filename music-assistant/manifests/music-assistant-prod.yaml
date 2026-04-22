@@ -32,7 +32,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: music-assistant
-        image: ghcr.io/music-assistant/server:latest
+        image: ghcr.io/music-assistant/server:2.8.1
         imagePullPolicy: IfNotPresent
         resources:
           requests:
