@@ -15,14 +15,11 @@ spec:
     repository: victoriametrics/victoria-metrics
     tag: v1.140.0
     pullPolicy: IfNotPresent
+  storageDataPath: /data
   volumes:
-    - name: vms-data
+    - name: data
       hostPath:
         path: /mnt/k3s-prod-data/vms-prod
-  volumeMounts:
-    - name: vms-data
-      mountPath: /data
-  storageDataPath: /data
   retentionPeriod: "30d"
   resources:
     limits:

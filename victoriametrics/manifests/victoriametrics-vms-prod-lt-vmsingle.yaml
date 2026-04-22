@@ -14,15 +14,12 @@ spec:
   image:
     repository: victoriametrics/victoria-metrics
     tag: v1.127.0
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
+  storageDataPath: /data
   volumes:
-    - name: vms-data-lt
+    - name: data
       hostPath:
         path: /mnt/k3s-prod-data/vms-prod-lt
-  volumeMounts:
-    - name: vms-data-lt
-      mountPath: /data
-  storageDataPath: /data
   retentionPeriod: "100y"
   resources:
     limits:
