@@ -13,8 +13,8 @@ metadata:
 spec:
   image:
     repository: victoriametrics/victoria-metrics
-    tag: v1.127.0
-    pullPolicy: Always
+    tag: v1.140.0
+    pullPolicy: IfNotPresent
   volumes:
     - name: vms-data
       hostPath:
