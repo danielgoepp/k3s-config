@@ -27,7 +27,7 @@ spec:
           value: "1"
       containers:
       - name: kopia-b2
-        image: kopia/kopia:latest
+        image: kopia/kopia:0.22.3
         resources:
           requests:
             cpu: "100m"
