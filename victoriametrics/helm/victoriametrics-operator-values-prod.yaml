@@ -1,5 +1,5 @@
 image:
-  tag: "v0.68.4"
+  tag: "v0.69.0"
   pullPolicy: IfNotPresent
 
 operator:
