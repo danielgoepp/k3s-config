@@ -41,11 +41,11 @@ spec:
     - name: graylog
       db: graylog
       passwordSecretRef:
-        name: graylog-secrets
+        name: graylog-password
       roles:
         - name: readWrite
           db: graylog
-      scramCredentialsSecretName: graylog-secrets
+      scramCredentialsSecretName: graylog-password
   additionalMongodConfig:
     storage.wiredTiger.engineConfig.journalCompressor: zlib
     systemLog.quiet: true
