@@ -51,7 +51,7 @@ VolumePermissions:
 
 extraInitContainers: |
   - name: prepare-pgpass
-    image: docker.io/dpage/pgadmin4:9.0
+    image: docker.io/dpage/pgadmin4:9.14.0
     command: [ 'sh', '-c', "cp /tmp/pgpass /var/lib/pgadmin/pgpass && chown pgadmin /var/lib/pgadmin/pgpass && chmod 600 /var/lib/pgadmin/pgpass " ]
     volumeMounts:
       - name: pgadmin-data
