@@ -17,25 +17,19 @@ spec:
             imagePullPolicy: IfNotPresent
             env:
               - name: HOSTNAME
-                valueFrom:
-                  secretKeyRef:
-                    name: graylog-secrets
-                    key: hostname
+                value: mongodb-svc.mongodb.svc.cluster.local
               - name: USERNAME
                 valueFrom:
                   secretKeyRef:
-                    name: graylog-secrets
+                    name: mongodb-graylog-graylog
                     key: username
               - name: PASSWORD
                 valueFrom:
                   secretKeyRef:
-                    name: graylog-secrets
+                    name: mongodb-graylog-graylog
                     key: password
               - name: DATABASE
-                valueFrom:
-                  secretKeyRef:
-                    name: graylog-secrets
-                    key: database
+                value: graylog
             command: ["/bin/sh", "-c"]
             args:
               - /usr/bin/mongodump --uri="mongodb+srv://$USERNAME:$PASSWORD@$HOSTNAME/$DATABASE?replicaSet=mongodb&ssl=false" --archive=/backups/mongodb/mongodb-$(date +'%Y-%m-%d').archive;
