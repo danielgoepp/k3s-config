@@ -1,7 +1,7 @@
 image:
   repository: quay.io/prometheus/alertmanager
   pullPolicy: IfNotPresent
-  tag: "0.32.1"
+  tag: "v0.32.1"
 
 extraArgs:
   web.external-url: "https://alertmanager-prod.goepp.net"
