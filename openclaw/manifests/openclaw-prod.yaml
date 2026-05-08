@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: gateway
-          image: ghcr.io/openclaw/openclaw:2026.4.21
+          image: ghcr.io/openclaw/openclaw:2026.5.7
           imagePullPolicy: IfNotPresent
           command:
             - node
