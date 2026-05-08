@@ -27,7 +27,7 @@ spec:
             value: "1"
       containers:
       - name: graylog
-        image: graylog/graylog:7.0.6
+        image: graylog/graylog:7.1.0
         imagePullPolicy: IfNotPresent
         resources:
           requests:
