@@ -150,7 +150,7 @@ metadata:
 spec:
   jobName: node_exporter
   targetEndpoints:
-    - targets: ["backup.goepp.net.:9100", "smb.goepp.net.:9100", "ui-network.goepp.net.:9100","dev.goepp.net.:9100","adambalm.goepp.net.:9100"]
+    - targets: ["backup.goepp.net.:9100", "smb.goepp.net.:9100", "ui-network.goepp.net.:9100","dev.goepp.net.:9100","adambalm.goepp.net.:9100","gru.goepp.net.:9100"]
       labels:
         group: "ubuntu-servers"
 
