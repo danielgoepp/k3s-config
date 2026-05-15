@@ -6,6 +6,12 @@ image:
 extraArgs:
   web.external-url: "https://alertmanager-prod.goepp.net"
 
+extraSecretMounts:
+  - name: alertmanager-secrets
+    mountPath: /etc/alertmanager/secrets
+    secretName: alertmanager-secrets
+    readOnly: true
+
 livenessProbe:
   httpGet:
     path: /
@@ -72,7 +78,7 @@ config:
           http_config:
             authorization:
               type: Bearer
-              credentials: "5Az1scNFEDy8i3QXXBb5kxKUjwkzuu"
+              credentials_file: /etc/alertmanager/secrets/awx-token
           send_resolved: false
 
   route:
