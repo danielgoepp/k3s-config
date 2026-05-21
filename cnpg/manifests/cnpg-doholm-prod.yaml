@@ -1,4 +1,23 @@
 ---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: minio-backup
+  namespace: cnpg-doholm
+spec:
+  destinationPath: s3://cnpgbackup/
+  endpointURL: https://minio-s3-prod.goepp.net
+  s3Credentials:
+    accessKeyId:
+      name: minio-creds
+      key: MINIO_ACCESS_KEY
+    secretAccessKey:
+      name: minio-creds
+      key: MINIO_SECRET_KEY
+  configuration:
+    retentionPolicy: "1d"
+
+---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -28,18 +47,11 @@ spec:
       database: doholm
       owner: doholm
 
-  backup:
-    barmanObjectStore:
-      destinationPath: s3://cnpgbackup/
-      endpointURL: https://minio-s3-prod.goepp.net
-      s3Credentials:
-        accessKeyId:
-          name: minio-creds
-          key: MINIO_ACCESS_KEY
-        secretAccessKey:
-          name: minio-creds
-          key: MINIO_SECRET_KEY
-    retentionPolicy: "1d"
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: minio-backup
+        isWALArchiver: "true"
 
 ---
 apiVersion: postgresql.cnpg.io/v1
@@ -49,7 +61,9 @@ metadata:
   namespace: cnpg-doholm
 spec:
   schedule: "0 0 0 * * *"
-  method: barmanObjectStore
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   immediate: true
   cluster:
     name: doholm-prod
@@ -63,6 +77,6 @@ metadata:
 spec:
   podMetricsEndpoints:
     - port: metrics
-  selector: 
+  selector:
     matchLabels:
       "cnpg.io/cluster": doholm-prod
