@@ -5,17 +5,17 @@ metadata:
   name: minio-backup
   namespace: cnpg-homeassistant
 spec:
-  destinationPath: s3://cnpgbackup/
-  endpointURL: https://minio-s3-prod.goepp.net
-  s3Credentials:
-    accessKeyId:
-      name: minio-creds
-      key: MINIO_ACCESS_KEY
-    secretAccessKey:
-      name: minio-creds
-      key: MINIO_SECRET_KEY
+  retentionPolicy: "1d"
   configuration:
-    retentionPolicy: "1d"
+    destinationPath: s3://cnpgbackup/
+    endpointURL: https://minio-s3-prod.goepp.net
+    s3Credentials:
+      accessKeyId:
+        name: minio-creds
+        key: MINIO_ACCESS_KEY
+      secretAccessKey:
+        name: minio-creds
+        key: MINIO_SECRET_KEY
 
 ---
 apiVersion: postgresql.cnpg.io/v1
