@@ -21,6 +21,17 @@ spec:
       hostPath:
         path: /mnt/k3s-prod-data/vms-prod
   retentionPeriod: "30d"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - k3s-prod-11
+                  - k3s-prod-12
+                  - k3s-prod-13
   resources:
     limits:
       cpu: 1000m

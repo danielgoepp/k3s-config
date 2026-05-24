@@ -42,6 +42,18 @@ spec:
     parameters:
       timezone: "America/New_York"
 
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - k3s-prod-11
+                  - k3s-prod-12
+                  - k3s-prod-13
+
   bootstrap:
     initdb:
       database: homeassistant
