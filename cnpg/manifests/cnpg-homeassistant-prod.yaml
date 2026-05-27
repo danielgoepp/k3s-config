@@ -2,20 +2,20 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: minio-backup
+  name: garage-backup
   namespace: cnpg-homeassistant
 spec:
-  retentionPolicy: "1d"
+  retentionPolicy: "3d"
   configuration:
-    destinationPath: s3://cnpgbackup/
-    endpointURL: https://minio-s3-prod.goepp.net
+    destinationPath: s3://cnpg-backups/
+    endpointURL: https://garage-s3-prod.goepp.net
     s3Credentials:
       accessKeyId:
-        name: minio-creds
-        key: MINIO_ACCESS_KEY
+        name: garage-creds
+        key: GARAGE_ACCESS_KEY
       secretAccessKey:
-        name: minio-creds
-        key: MINIO_SECRET_KEY
+        name: garage-creds
+        key: GARAGE_SECRET_KEY
 
 ---
 apiVersion: postgresql.cnpg.io/v1
@@ -54,6 +54,10 @@ spec:
                   - k3s-prod-12
                   - k3s-prod-13
 
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: garage
+
   bootstrap:
     initdb:
       database: homeassistant
@@ -62,7 +66,7 @@ spec:
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       parameters:
-        barmanObjectName: minio-backup
+        barmanObjectName: garage-backup
         isWALArchiver: "true"
 
 ---
