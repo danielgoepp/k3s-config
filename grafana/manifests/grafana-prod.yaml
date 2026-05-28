@@ -32,17 +32,6 @@ data:
     cdn_url =
     read_timeout = 0
 
-    [database]
-    # Either "mysql", "postgres" or "sqlite3", it's your choice
-    # type = postgres
-    # host = grafana-prod-rw.cnpg-grafana.svc.cluster.local:5432
-    # name = grafana
-    # user = grafana
-    # password = ***
-    # Use either URL or the previous fields to configure the database
-    # Example: mysql://user:secret@host:port/database
-    # url = postgres://grafana:***@grafana-prod-rw.cnpg-grafana.svc.cluster.local:5432/grafana
-
     [log]
     level = info
 
@@ -52,14 +41,6 @@ data:
     [unified_alerting]
     rule_version_record_limit = 5
     deleted_rule_retention = 1d
-
-    # [plugin.grafana-image-renderer]
-    # rendering_verbose_logging = true
-    # rendering_dumpio = true
-
-    # [rendering]
-    # server_url = http://grafana-render.grafana.svc.cluster.local:8081/render
-    # callback_url = https://grafana-prod.goepp.net/
 
 ---
 apiVersion: apps/v1
@@ -93,12 +74,6 @@ spec:
         env:
           - name: GF_INSTALL_PLUGINS
             value: "victoriametrics-metrics-datasource 0.23.4"
-          # - name: GF_INSTALL_PLUGINS
-          #   value: "victoriametrics-metrics-datasource"
-          # - name: GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES
-          #   value: "false"
-          # - name: GF_ANALYTICS_CHECK_FOR_UPDATES
-          #   value: "false"
           - name: GF_UNIFIED_ALERTING_INITIALIZATION_TIMEOUT
             value: "120s"
           - name: GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS
@@ -125,11 +100,11 @@ spec:
           containerPort: 3000
         readinessProbe:
           httpGet:
-            path: /
+            path: /api/health
             port: 3000
         livenessProbe:
           httpGet:
-            path: /
+            path: /api/health
             port: 3000
       volumes:
       - name: grafana-config-ini
@@ -142,53 +117,6 @@ spec:
         hostPath:
           path: "/mnt/k3s-prod-data/grafana/plugins"
 
-
-# ---
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: grafana-renderer
-#   namespace: grafana
-#   labels:
-#     app: grafana-renderer
-# spec:
-#   replicas: 1
-#   strategy:
-#     type: Recreate
-#   selector:
-#     matchLabels:
-#       app: grafana-renderer
-#   template:
-#     metadata:
-#       labels:
-#         app: grafana-renderer
-#     spec:
-#       dnsConfig:
-#         options:
-#           - name: ndots
-#             value: "1"
-#       containers:
-#       - name: grafana-renderer
-#         image: grafana/grafana-image-renderer:latest
-#         imagePullPolicy: IfNotPresent
-#         resources:
-#           requests:
-#             cpu: "100m"
-#             memory: "128Mi"
-#           limits:
-#             cpu: "200m"
-#             memory: "256Mi"
-#         ports:
-#         - name: http
-#           containerPort: 8081
-#         readinessProbe:
-#           httpGet:
-#             path: /
-#             port: 8081
-#         livenessProbe:
-#           httpGet:
-#             path: /
-#             port: 8081
 
 ---
 apiVersion: v1
@@ -206,21 +134,6 @@ spec:
     targetPort: 3000
     protocol: TCP
 
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: grafana-render
-#   namespace: grafana
-# spec:
-#   selector:
-#     app: grafana-renderer
-#   type: ClusterIP
-#   ports:
-#   - name: http
-#     port: 8081
-#     targetPort: 8081
-#     protocol: TCP
 
 ---
 apiVersion: traefik.io/v1alpha1
