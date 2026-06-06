@@ -53,6 +53,9 @@ spec:
         imagePullPolicy: IfNotPresent
         command: ["/garage", "server"]
         args: ["--single-node", "--default-bucket"]
+        env:
+        - name: RUST_LOG
+          value: "warn"
         envFrom:
         - secretRef:
             name: garage-secrets
