@@ -29,6 +29,7 @@ data:
     [[inputs.upsd]]
         name_override = "ups"
         force_float = true
+        stringify_ids = false
         password = "password"
         port = 3493
         server = "mudderpi.goepp.net."
@@ -38,6 +39,7 @@ data:
     [[inputs.upsd]]
         name_override = "ups"
         force_float = true
+        stringify_ids = false
         password = "password"
         port = 3493
         server = "rockyledge.goepp.net."
@@ -47,6 +49,7 @@ data:
     [[inputs.upsd]]
         name_override = "ups"
         force_float = true
+        stringify_ids = false
         password = "password"
         port = 3493
         server = "morgspi.goepp.net."
