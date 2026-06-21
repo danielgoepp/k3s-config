@@ -32,7 +32,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: music-assistant
-        image: ghcr.io/music-assistant/server:2.8.7
+        image: ghcr.io/music-assistant/server:2.9.2
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -50,6 +50,8 @@ spec:
         env:
         - name: LOG_LEVEL
           value: "info"
+        - name: TZ
+          value: "America/New_York"
         volumeMounts:
         - name: music-assistant-data
           mountPath: /data
