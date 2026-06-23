@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: esphome
-        image: esphome/esphome:2026.6.1
+        image: esphome/esphome:2026.6.2
         imagePullPolicy: IfNotPresent
         resources:
           requests:
