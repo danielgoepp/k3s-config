@@ -24,7 +24,7 @@ metadata:
   name: grafana-prod
   namespace: cnpg-grafana
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.3-standard-trixie
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie
   instances: 2
 
   storage:
