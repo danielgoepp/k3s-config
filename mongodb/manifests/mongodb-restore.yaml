@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: mongodb-restore
-        image: docker.io/mongo:8.0.21
+        image: docker.io/mongo:8.0.26
         imagePullPolicy: IfNotPresent
         env:
               - name: HOSTNAME
