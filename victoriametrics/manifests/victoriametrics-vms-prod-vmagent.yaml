@@ -39,6 +39,35 @@ spec:
           port: 8429
 
 ---
+# The operator-generated ClusterRole grants nodes/metrics but not nodes/proxy,
+# which is required to scrape cAdvisor via the API server proxy
+# (/api/v1/nodes/<node>/proxy/metrics/cadvisor). Grant it separately.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vmagent-vma-prod-nodes-proxy
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes/proxy
+    verbs:
+      - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vmagent-vma-prod-nodes-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vmagent-vma-prod-nodes-proxy
+subjects:
+  - kind: ServiceAccount
+    name: vmagent-vma-prod
+    namespace: victoriametrics
+
+---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMNodeScrape
 metadata:
