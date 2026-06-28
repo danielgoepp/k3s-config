@@ -32,10 +32,10 @@ spec:
         resources:
           requests:
             cpu: "100m"
-            memory: "256Mi"
+            memory: "512Mi"
           limits:
             cpu: "2000m"
-            memory: "512Mi"
+            memory: "2Gi"
         env:
         - name: VUE_APP_URL_BASE_API
           value: "https://n8n-prod.goepp.net/"
@@ -49,8 +49,6 @@ spec:
           value: "5678"
         - name: "N8N_PROTOCOL"
           value: "http"
-        - name: N8N_RUNNERS_ENABLED
-          value: "true"
         - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
           value: "true"
         - name: N8N_MIGRATE_FS_STORAGE_PATH
