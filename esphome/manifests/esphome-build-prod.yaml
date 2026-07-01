@@ -29,7 +29,7 @@ spec:
         kubernetes.io/hostname: k3s-prod-15
       containers:
       - name: esphome
-        image: esphome/esphome:2026.6.2
+        image: esphome/esphome:2026.6.4
         imagePullPolicy: IfNotPresent
         resources:
           requests:
