@@ -263,7 +263,7 @@ spec:
             value: "1"
       containers:
       - name: telegraf-mqtt-to-vms
-        image: telegraf:1.39.0
+        image: telegraf:1.39.1
         imagePullPolicy: IfNotPresent
         resources:
           requests:
