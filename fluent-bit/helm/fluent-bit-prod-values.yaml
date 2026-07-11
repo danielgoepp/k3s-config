@@ -1,6 +1,6 @@
 image:
   repository: cr.fluentbit.io/fluent/fluent-bit
-  tag: 5.0.3
+  tag: 5.0.9
   pullPolicy: IfNotPresent
 
 resources:
