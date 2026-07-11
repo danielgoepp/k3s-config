@@ -35,5 +35,3 @@ spec:
         - name: birdnet
           port: 80
           passHostHeader: false
-  tls:
-    secretName: wildcard-goepp-net-tls

@@ -128,8 +128,6 @@ spec:
       services:
         - name: garage
           port: 3900
-  tls:
-    secretName: wildcard-goepp-net-tls
 
 ---
 apiVersion: traefik.io/v1alpha1
@@ -146,5 +144,3 @@ spec:
       services:
         - name: garage
           port: 3903
-  tls:
-    secretName: wildcard-goepp-net-tls
