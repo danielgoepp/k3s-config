@@ -32,6 +32,8 @@ spec:
           - "streamable-http"
           - "--address"
           - "0.0.0.0:8000"
+          - "--allowed-hosts"
+          - "grafana-mcp-prod.goepp.net"
         env:
           - name: GRAFANA_URL
             value: "http://grafana.grafana.svc.cluster.local.:3000"
