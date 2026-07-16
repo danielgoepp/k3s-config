@@ -37,6 +37,8 @@ spec:
         env:
           - name: GRAFANA_URL
             value: "http://grafana.grafana.svc.cluster.local.:3000"
+          - name: GRAFANA_ORG_ID
+            value: "1"
         envFrom:
           - secretRef:
               name: grafana-mcp-secrets
