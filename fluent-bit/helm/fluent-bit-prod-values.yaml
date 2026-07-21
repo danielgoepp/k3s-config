@@ -14,6 +14,12 @@ tolerations:
   - effect: NoSchedule
     operator: Exists
 
+env:
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+
 config:
 
   ## https://docs.fluentbit.io/manual/pipeline/inputs
@@ -45,6 +51,12 @@ config:
         Add_prefix k3s_
 
     [FILTER]
+        Name modify
+        Match kube.*
+        Condition Key_Does_Not_Exist k3s_host
+        Add k3s_host ${NODE_NAME}
+
+    [FILTER]
         name parser
         Match kube.var.log.pods.homeassistant*
         Key_Name message
@@ -72,7 +84,7 @@ config:
     [OUTPUT]
         Name gelf
         Match kube.*
-        Host graylog-prod.goepp.net.
+        Host graylog-udp.graylog.svc.cluster.local
         Port 12201
         Mode udp
         Gelf_Short_Message_Key message
