@@ -1,7 +1,7 @@
 image:
   registry: docker.io
   repository: dpage/pgadmin4
-  tag: 9.16
+  tag: 9.17
   pullPolicy: IfNotPresent
 
 serverDefinitions:
@@ -60,7 +60,7 @@ VolumePermissions:
 
 extraInitContainers: |
   - name: prepare-pgpass
-    image: docker.io/dpage/pgadmin4:9.16
+    image: docker.io/dpage/pgadmin4:9.17
     command: [ 'sh', '-c', "cp /tmp/pgpass /var/lib/pgadmin/pgpass && chown pgadmin /var/lib/pgadmin/pgpass && chmod 600 /var/lib/pgadmin/pgpass " ]
     volumeMounts:
       - name: pgadmin-data
