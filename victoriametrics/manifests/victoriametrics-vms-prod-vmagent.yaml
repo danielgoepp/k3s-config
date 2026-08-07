@@ -17,6 +17,7 @@ spec:
     pullPolicy: IfNotPresent
   selectAllByDefault: true
   replicaCount: 1
+  revisionHistoryLimitCount: 2
   scrapeInterval: 30s
   scrapeTimeout: 10s
   remoteWrite:

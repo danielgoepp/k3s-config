@@ -16,6 +16,7 @@ spec:
     tag: v1.149.0
     pullPolicy: IfNotPresent
   storageDataPath: /data
+  revisionHistoryLimitCount: 2
   volumes:
     - name: data
       hostPath:
