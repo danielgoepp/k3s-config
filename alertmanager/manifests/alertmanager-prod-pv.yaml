@@ -1,0 +1,26 @@
+---
+# Static PV backing the Helm chart's "storage" volumeClaimTemplate
+# (storage-alertmanager-0), bound via storageClassName instead of the
+# cluster's default `local-path` dynamic provisioner. hostPath points at
+# the CephFS-backed /mnt/k3s-prod-data mount present identically on every
+# k3s-prod node, so silences survive the pod moving between nodes (e.g.
+# during ops-upgrade-cluster.yaml node drains) instead of being pinned to
+# whichever node first created a local-path PV.
+#
+# One-time setup, applied manually (alertmanager-prod is deployed via helm,
+# not manifest, so this isn't re-applied by the standard update-app flow):
+#   kubectl apply -f alertmanager-prod-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: alertmanager-prod-pv
+  labels:
+    type: local
+spec:
+  storageClassName: alertmanager-volume
+  capacity:
+    storage: 50Mi # Placeholder; hostPath doesn't enforce size
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/k3s-prod-data/alertmanager"

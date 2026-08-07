@@ -35,7 +35,13 @@ ingress:
   tls: []
 
 persistence:
-  enabled: false
+  enabled: true
+  # Static PV on CephFS-backed /mnt/k3s-prod-data (see
+  # ../manifests/alertmanager-prod-pv.yaml) instead of the cluster's
+  # default local-path provisioner, so silences survive the pod moving
+  # between nodes rather than being pinned to whichever node first
+  # created a local-path PV.
+  storageClass: alertmanager-volume
   accessModes:
     - ReadWriteOnce
   size: 50Mi
