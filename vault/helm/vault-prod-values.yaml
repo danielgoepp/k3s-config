@@ -16,7 +16,7 @@ injector:
 
   image:
     repository: "hashicorp/vault-k8s"
-    tag: "1.7.5"
+    tag: "1.7.6"
     pullPolicy: IfNotPresent
 
   agentImage:
