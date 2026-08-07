@@ -25,7 +25,7 @@ spec:
             value: "1"
       containers:
       - name: grafana-mcp
-        image: grafana/mcp-grafana:0.17.2
+        image: grafana/mcp-grafana:1.0.0
         imagePullPolicy: IfNotPresent
         args:
           - "-t"
