@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
           - name: mongodb-backup
-            image: docker.io/mongo:8.0.26
+            image: docker.io/mongo:8.0.28
             imagePullPolicy: IfNotPresent
             env:
               - name: HOSTNAME
