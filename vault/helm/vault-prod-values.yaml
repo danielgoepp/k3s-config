@@ -74,6 +74,7 @@ server:
 
   readinessProbe:
     enabled: true
+    path: "/v1/sys/health?standbyok=true&uninitcode=204&sealedcode=204"
     port: 8200
     failureThreshold: 2
     initialDelaySeconds: 5
