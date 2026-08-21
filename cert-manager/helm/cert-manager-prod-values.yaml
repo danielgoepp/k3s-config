@@ -7,3 +7,11 @@ global:
 
 crds:
   enabled: true
+
+extraArgs:
+  - --max-concurrent-challenges=60
+  # Bypass internal DNS for ACME DNS-01 self-checks; coredns-custom forwards
+  # goepp.net to Unbound -> dnsmasq, which doesn't recurse for unknown
+  # subdomains like _acme-challenge, causing propagation checks to hang forever.
+  - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53
+  - --dns01-recursive-nameservers-only=true
