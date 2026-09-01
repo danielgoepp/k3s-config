@@ -13,6 +13,9 @@ spec:
   ingress_class_name: traefik
   ingress_annotations: |
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  ee_extra_env: |
+    - name: RECEPTOR_KUBE_SUPPORT_RECONNECT
+      value: "enabled"
 
 ---
 apiVersion: v1
