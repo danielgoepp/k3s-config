@@ -340,3 +340,9 @@ speaker:
 crds:
   enabled: true
   validationFailurePolicy: Fail
+
+# frr-k8s is a separate subchart deployed alongside metallb (speaker.frr.enabled
+# only controls the legacy in-speaker FRR container). It has its own log level.
+frr-k8s:
+  frrk8s:
+    logLevel: warn
