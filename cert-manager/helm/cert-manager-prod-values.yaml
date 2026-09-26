@@ -2,7 +2,7 @@ global:
   revisionHistoryLimit: 0
   image:
     repository: quay.io/jetstack/cert-manager-controller
-    tag: 1.21.1
+    tag: 1.21.2
     pullPolicy: IfNotPresent
 
 crds:
