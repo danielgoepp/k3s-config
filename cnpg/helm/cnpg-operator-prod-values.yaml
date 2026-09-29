@@ -1,4 +1,4 @@
 image:
   repository: ghcr.io/cloudnative-pg/cloudnative-pg
   pullPolicy: IfNotPresent
-  tag: 1.30.0
+  tag: 1.30.1
