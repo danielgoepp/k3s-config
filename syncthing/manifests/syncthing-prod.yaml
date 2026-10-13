@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: syncthing
-        image: syncthing/syncthing:2.1.5
+        image: syncthing/syncthing:2.1.6
         imagePullPolicy: IfNotPresent
         resources:
           requests:
