@@ -56,6 +56,8 @@ spec:
       roles:
         - name: readWrite
           db: graylog
+        - name: dbAdmin
+          db: graylog
       scramCredentialsSecretName: graylog-password
   additionalMongodConfig:
     storage.wiredTiger.engineConfig.journalCompressor: zlib
