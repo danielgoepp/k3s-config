@@ -15,7 +15,7 @@ masterService: "opensearch-prod-cluster-master"
 
 image:
   repository: "opensearchproject/opensearch"
-  tag: "2.19.5"
+  tag: "2.19.6"
   pullPolicy: "Always"
 
 config:
