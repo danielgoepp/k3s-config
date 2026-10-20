@@ -13,7 +13,7 @@ metadata:
 spec:
   image:
     repository: victoriametrics/victoria-metrics
-    tag: v1.154.0
+    tag: v1.154.1
     pullPolicy: IfNotPresent
   storageDataPath: /data
   revisionHistoryLimitCount: 2
