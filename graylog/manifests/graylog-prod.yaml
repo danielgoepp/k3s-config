@@ -101,7 +101,6 @@ spec:
   selector:
     app: graylog
   type: ClusterIP
-  clusterIP: None
   ports:
   - name: syslog-udp
     port: 1514
