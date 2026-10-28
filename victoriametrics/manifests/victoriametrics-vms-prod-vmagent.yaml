@@ -13,7 +13,7 @@ metadata:
 spec:
   image:
     repository: victoriametrics/vmagent
-    tag: v1.154.1
+    tag: v1.155.0
     pullPolicy: IfNotPresent
   selectAllByDefault: true
   replicaCount: 1
