@@ -12,7 +12,7 @@ This repository manages a complete home infrastructure stack including:
 
 - **Home Automation**: Home Assistant, Zigbee2MQTT, ESPHome, Mosquitto MQTT
 - **Monitoring**: VictoriaMetrics, Telegraf, Grafana, AlertManager
-- **Logging**: Graylog, Fluent-bit
+- **Logging**: Graylog, OpenSearch (with Prometheus exporter), Fluent-bit
 - **Infrastructure**: Traefik ingress, MetalLB load balancer, cert-manager
 - **Automation**: AWX (Ansible)
 - **Services**: Uptime Kuma, Syncthing, n8n, Kopia backup, and more

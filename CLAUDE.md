@@ -29,6 +29,7 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 - **Telegraf**: Metrics collection from MQTT, SNMP, UPSd
 - **Grafana**: Visualization (backed by PostgreSQL, uses VictoriaMetrics datasource plugin)
 - **Graylog**: Log aggregation (StatefulSet)
+- **OpenSearch**: Graylog's search backend (Helm); `opensearch-exporter` publishes cluster health metrics, scraped through `prometheus.io/*` Service annotations and used by a Grafana alert
 - **AlertManager**: Alert routing
 
 ### Home Automation Stack
