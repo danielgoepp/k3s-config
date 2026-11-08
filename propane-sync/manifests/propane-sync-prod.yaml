@@ -19,6 +19,11 @@ spec:
         spec:
           containers:
           - name: propane-sync
-            image: danielgoepp/propane-sync:latest
+            image: ghcr.io/danielgoepp/propane-sync:latest
             imagePullPolicy: IfNotPresent
+            env:
+              - name: SOURCE_URL
+                value: "https://vms-prod.goepp.net"
+              - name: TARGET_URL
+                value: "https://vms-prod-lt.goepp.net"
           restartPolicy: Never
