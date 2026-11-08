@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
       - name: m2m-controller
-        image: danielgoepp/m2m-controller:latest
+        image: ghcr.io/danielgoepp/m2m-controller:latest
         imagePullPolicy: IfNotPresent
         env:
         - name: MQTT_SERVER
