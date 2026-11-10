@@ -1,5 +1,5 @@
 image:  # @schema additionalProperties: false
-  tag: 3.7.12
+  tag: 3.7.17
   pullPolicy: IfNotPresent
 
 deployment:
