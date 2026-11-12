@@ -27,7 +27,7 @@ spec:
           value: "1"
       containers:
       - name: kopia-ssd
-        image: kopia/kopia:0.22.3
+        image: kopia/kopia:0.23.1
         resources:
           requests:
             cpu: "100m"

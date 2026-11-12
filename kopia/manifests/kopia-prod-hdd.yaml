@@ -28,7 +28,7 @@ spec:
           value: "1"
       containers:
       - name: kopia-hdd
-        image: kopia/kopia:0.22.3
+        image: kopia/kopia:0.23.1
         securityContext:
           runAsUser: 0
           runAsGroup: 0
