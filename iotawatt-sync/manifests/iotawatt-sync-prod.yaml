@@ -32,7 +32,7 @@ spec:
       containers:
       - name: iotawatt-sync
         image: ghcr.io/danielgoepp/iotawatt-sync:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         resources:
           requests:
             cpu: "100m"

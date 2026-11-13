@@ -35,7 +35,7 @@ spec:
       containers:
       - name: m2m-controller
         image: ghcr.io/danielgoepp/m2m-controller:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: MQTT_SERVER
           valueFrom:
