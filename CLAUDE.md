@@ -26,6 +26,9 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 
 **Monitoring & Logging**
 - **VictoriaMetrics**: Time-series database for metrics (InfluxDB v2 compatible endpoint)
+  - Scrape targets use VictoriaMetrics CRDs (`VMPodScrape`, `VMNodeScrape`, etc.); the operator's Prometheus CRD converter is disabled, so `PodMonitor`/`ServiceMonitor` objects are ignored
+  - Kubelet is scraped through the API server node proxy: cAdvisor (`cadvisor-metrics`) and PVC usage (`kubelet-volume-stats`, filtered to `kubelet_volume_stats_*`)
+  - CNPG: each database cluster has a `VMPodScrape` for its instance pods, and `cnpg/manifests/cnpg-operator-monitor.yaml` scrapes the operator in `cnpg-system`
 - **Telegraf**: Metrics collection from MQTT, SNMP, UPSd
 - **Grafana**: Visualization (backed by PostgreSQL, uses VictoriaMetrics datasource plugin)
 - **Graylog**: Log aggregation (StatefulSet)
