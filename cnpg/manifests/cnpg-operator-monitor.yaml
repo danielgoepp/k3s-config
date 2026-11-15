@@ -1,0 +1,15 @@
+---
+# Scrape the CloudNativePG operator's own metrics (controller-runtime reconcile
+# counts, workqueue stats, etc.). The per-cluster VMPodScrapes only cover the
+# database instance pods.
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-operator-monitor
+  namespace: cnpg-system
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
