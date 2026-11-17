@@ -1,0 +1,98 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: garage-backup
+  namespace: cnpg-miniflux
+spec:
+  retentionPolicy: "3d"
+  configuration:
+    destinationPath: s3://cnpg-backups/
+    endpointURL: https://garage-s3-prod.goepp.net
+    s3Credentials:
+      accessKeyId:
+        name: garage-creds
+        key: GARAGE_ACCESS_KEY
+      secretAccessKey:
+        name: garage-creds
+        key: GARAGE_SECRET_KEY
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: miniflux-prod
+  namespace: cnpg-miniflux
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-standard-trixie
+  instances: 2
+
+  storage:
+    size: 1Gi
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  postgresql:
+    parameters:
+      timezone: "America/New_York"
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - k3s-prod-11
+                  - k3s-prod-12
+                  - k3s-prod-13
+
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: garage
+
+  bootstrap:
+    initdb:
+      database: miniflux
+      owner: miniflux
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: garage-backup
+        isWALArchiver: "true"
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: miniflux-prod-backup
+  namespace: cnpg-miniflux
+spec:
+  schedule: "0 0 0 * * *"
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  immediate: true
+  cluster:
+    name: miniflux-prod
+
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: cnpg-prod-monitor
+  namespace: cnpg-miniflux
+spec:
+  podMetricsEndpoints:
+    - port: metrics
+  selector:
+    matchLabels:
+      "cnpg.io/cluster": miniflux-prod
