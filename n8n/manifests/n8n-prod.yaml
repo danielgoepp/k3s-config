@@ -97,6 +97,9 @@ spec:
             secretKeyRef:
               name: n8n-sandbox
               key: SANDBOX_API_KEYS
+        # Web search for the AI assistant (see n8n-searxng-prod.yaml)
+        - name: N8N_INSTANCE_AI_SEARXNG_URL
+          value: "http://searxng:8080"
         # Task runners run as the "runners" sidecar below; the broker stays on
         # 127.0.0.1:5679 (pod-local), so it is never exposed via a Service.
         - name: N8N_RUNNERS_MODE

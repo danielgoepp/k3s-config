@@ -1,0 +1,143 @@
+# SearXNG web-search backend for the n8n AI assistant (Instance AI).
+# Kubernetes port of the searxng service in n8n's reference compose file:
+# https://github.com/n8n-io/n8n/blob/master/docker/get-n8n-compose.yml
+#
+# Requires the n8n-searxng Secret from n8n-searxng-secrets.yaml (gitignored).
+# Cluster-internal only: n8n reaches it at http://searxng:8080; no ingress.
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-settings
+  namespace: n8n
+data:
+  settings.yml: |
+    use_default_settings:
+      engines:
+        # Onion-only engines; they fail to load without Tor
+        remove:
+          - ahmia
+          - torch
+    general:
+      # general.contact_url comes from SEARXNG_CONTACT_URL (Secret); the
+      # wikipedia, wikidata and openstreetmap engines need it.
+      enable_metrics: false
+    server:
+      # Internal backend for n8n only, not a public instance
+      limiter: false
+      public_instance: false
+      image_proxy: false
+    search:
+      # n8n queries SearXNG through its JSON API
+      formats:
+        - html
+        - json
+  # Bot detection is unused (limiter off); present to avoid the
+  # missing-config warning. n8n calls SearXNG directly, so SearXNG still logs
+  # "X-Forwarded-For nor X-Real-IP header is set!" once per worker; harmless.
+  limiter.toml: |
+    [botdetection]
+    trusted_proxies = [
+      '127.0.0.0/8',
+      '::1',
+    ]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: n8n
+  labels:
+    app: searxng
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: searxng
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: searxng
+      annotations:
+        # Bump when searxng-settings changes (subPath mounts don't auto-update)
+        n8n.goepp.net/settings-rev: "2"
+    spec:
+      # A Service named searxng would inject SEARXNG_PORT=tcp://..., which
+      # SearXNG reads as its own listen port.
+      enableServiceLinks: false
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: searxng
+        image: ghcr.io/searxng/searxng:2026.11.21-c6ee3e9fd
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        env:
+        - name: TZ
+          value: "America/New_York"
+        - name: SEARXNG_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: n8n-searxng
+              key: SEARXNG_SECRET
+        - name: SEARXNG_CONTACT_URL
+          valueFrom:
+            secretKeyRef:
+              name: n8n-searxng
+              key: SEARXNG_CONTACT_URL
+              optional: true
+        volumeMounts:
+        - name: settings
+          mountPath: /etc/searxng/settings.yml
+          subPath: settings.yml
+          readOnly: true
+        - name: settings
+          mountPath: /etc/searxng/limiter.toml
+          subPath: limiter.toml
+          readOnly: true
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+      volumes:
+      - name: settings
+        configMap:
+          name: searxng-settings
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: searxng
+  namespace: n8n
+spec:
+  selector:
+    app: searxng
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

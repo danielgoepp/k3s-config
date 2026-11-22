@@ -13,3 +13,9 @@ Guidance for the n8n deployment in this directory (namespace `n8n`).
   - Service names `sandbox-api` / `sandbox-runner-1` are baked into the cert SANs; don't rename them
   - Sandbox pods set `enableServiceLinks: false` so injected `SANDBOX_API_*` service env vars don't collide with app config
   - API, runner and `SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE` must stay on the same sandbox release
+- **SearXNG** (`manifests/n8n-searxng-prod.yaml`): web-search backend for the AI assistant, reached by n8n at `http://searxng:8080` (`N8N_INSTANCE_AI_SEARXNG_URL`); cluster-internal only, no ingress
+  - `settings.yml` and `limiter.toml` come from the `searxng-settings` ConfigMap; the `json` format must stay enabled for n8n's queries. Limiter is off; Tor engines (ahmia, torch) are removed
+  - ConfigMap files are `subPath` mounts, which don't auto-update: bump the `n8n.goepp.net/settings-rev` pod annotation when editing them
+  - `SEARXNG_SECRET` and the optional `SEARXNG_CONTACT_URL` (required by the wikipedia, wikidata and openstreetmap engines) live in the gitignored `manifests/n8n-searxng-secrets.yaml` (Secret `n8n-searxng`)
+  - "X-Forwarded-For nor X-Real-IP header is set!" is logged once per worker because n8n calls SearXNG directly; harmless with the limiter off
+  - The pod sets `enableServiceLinks: false`: the injected `SEARXNG_PORT=tcp://...` would override SearXNG's listen port
