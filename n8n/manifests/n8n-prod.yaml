@@ -158,6 +158,10 @@ spec:
         # Idle runners exit and are relaunched on demand
         - name: N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT
           value: "15"
+        # The runner enforces the task timeout itself (default 60s), so it must
+        # match N8N_RUNNERS_TASK_TIMEOUT on the n8n container
+        - name: N8N_RUNNERS_TASK_TIMEOUT
+          value: "300"
       volumes:
       - name: n8n-config
         hostPath:
