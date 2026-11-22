@@ -25,6 +25,8 @@ spec:
       labels:
         app: n8n
     spec:
+      # Service links would inject N8N_PORT=tcp://... into the runners sidecar.
+      enableServiceLinks: false
       containers:
       - name: n8n
         image: n8nio/n8n:2.49.3
@@ -95,6 +97,15 @@ spec:
             secretKeyRef:
               name: n8n-sandbox
               key: SANDBOX_API_KEYS
+        # Task runners run as the "runners" sidecar below; the broker stays on
+        # 127.0.0.1:5679 (pod-local), so it is never exposed via a Service.
+        - name: N8N_RUNNERS_MODE
+          value: "external"
+        - name: N8N_RUNNERS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: n8n-runners
+              key: N8N_RUNNERS_AUTH_TOKEN
         volumeMounts:
         - name: n8n-config
           mountPath: "/home/node/.n8n"
@@ -109,6 +120,31 @@ spec:
           httpGet:
             path: /healthz
             port: 5678
+      # Runs Code-node user code (JavaScript and Python). Image tag must match
+      # the n8n version above.
+      - name: runners
+        image: ghcr.io/n8n-io/runners:2.49.3
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        env:
+        - name: TZ
+          value: "America/New_York"
+        - name: N8N_RUNNERS_TASK_BROKER_URI
+          value: "http://127.0.0.1:5679"
+        - name: N8N_RUNNERS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: n8n-runners
+              key: N8N_RUNNERS_AUTH_TOKEN
+        # Idle runners exit and are relaunched on demand
+        - name: N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT
+          value: "15"
       volumes:
       - name: n8n-config
         hostPath:
