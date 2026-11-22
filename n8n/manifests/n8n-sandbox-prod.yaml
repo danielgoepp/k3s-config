@@ -1,0 +1,344 @@
+# n8n sandbox service (code sandbox for the n8n AI assistant / Instance AI).
+# Kubernetes port of the sandbox-* services in n8n's reference compose file:
+# https://github.com/n8n-io/n8n/blob/master/docker/get-n8n-compose.yml
+#
+# Requires the n8n-sandbox Secret from n8n-sandbox-secrets.yaml (gitignored).
+#
+# The sandbox API, runner and sandbox images ship as one release and are only
+# supported together: keep all three tags (including
+# SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE below) on the same version.
+#
+# The Service names sandbox-api and sandbox-runner-1 must not change: they are
+# baked into the mTLS certificate SANs and TLS server names.
+#
+# To rotate the mTLS certificates:
+#   kubectl -n n8n delete job n8n-sandbox-certs
+#   kubectl -n n8n delete secret n8n-sandbox-tls-api n8n-sandbox-tls-runner
+#   kubectl apply -f n8n/manifests/n8n-sandbox-prod.yaml
+#   kubectl -n n8n rollout restart deploy/sandbox-api deploy/sandbox-runner-1
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: n8n-sandbox-certs
+  namespace: n8n
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: n8n-sandbox-certs
+  namespace: n8n
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: n8n-sandbox-certs
+  namespace: n8n
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: n8n-sandbox-certs
+subjects:
+- kind: ServiceAccount
+  name: n8n-sandbox-certs
+  namespace: n8n
+
+---
+# One-off job (compose: sandbox-certs). Generates the mTLS CA and certs into an
+# emptyDir, then stores them as two Secrets that the API and runner pods mount.
+# Those pods stay in ContainerCreating until the Secrets exist.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: n8n-sandbox-certs
+  namespace: n8n
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: n8n-sandbox-certs
+    spec:
+      serviceAccountName: n8n-sandbox-certs
+      restartPolicy: Never
+      enableServiceLinks: false
+      initContainers:
+      - name: bootstrap-mtls
+        image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.8.1
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        command: ["sh", "-c"]
+        args:
+        - >
+          bootstrap-mtls.sh --out-dir /tls --api-san sandbox-api
+          --control-san-prefix sandbox-runner --world-readable
+        env:
+        - name: NUM_RUNNERS
+          value: "1"
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+      containers:
+      - name: secret-api
+        image: registry.k8s.io/kubectl:v1.37.1
+        args: ["create", "secret", "generic", "n8n-sandbox-tls-api", "--from-file=/tls/api"]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      - name: secret-runner
+        image: registry.k8s.io/kubectl:v1.37.1
+        args: ["create", "secret", "generic", "n8n-sandbox-tls-runner", "--from-file=/tls/runner"]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      volumes:
+      - name: tls
+        emptyDir:
+          medium: Memory
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandbox-api
+  namespace: n8n
+  labels:
+    app: sandbox-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sandbox-api
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: sandbox-api
+    spec:
+      # Service links would inject SANDBOX_API_PORT etc., colliding with the
+      # app's own SANDBOX_API_* configuration.
+      enableServiceLinks: false
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: sandbox-api
+        image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.8.1
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        env:
+        - name: TZ
+          value: "America/New_York"
+        - name: SANDBOX_API_KEYS
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_API_KEYS
+        - name: SANDBOX_API_RUNNER_REGISTRATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_REGISTRATION_TOKEN
+        - name: SANDBOX_API_RUNNER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_RUNNER_API_KEY
+        - name: SANDBOX_API_GRPC_TLS_CERT_FILE
+          value: /tls/api/grpc-server.crt
+        - name: SANDBOX_API_GRPC_TLS_KEY_FILE
+          value: /tls/api/grpc-server.key
+        - name: SANDBOX_API_GRPC_TLS_CLIENT_CA_FILE
+          value: /tls/api/ca.crt
+        - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_CA_FILE
+          value: /tls/api/ca.crt
+        - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_CERT_FILE
+          value: /tls/api/control-grpc-api-client.crt
+        - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_KEY_FILE
+          value: /tls/api/control-grpc-api-client.key
+        - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_SERVER_NAME
+          value: sandbox-runner-1
+        volumeMounts:
+        - name: tls
+          mountPath: /tls/api
+          readOnly: true
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: grpc
+          containerPort: 9090
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+      volumes:
+      - name: tls
+        secret:
+          secretName: n8n-sandbox-tls-api
+          defaultMode: 0444
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandbox-api
+  namespace: n8n
+spec:
+  selector:
+    app: sandbox-api
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+
+---
+# Privileged Docker-in-Docker runner. Never expose this outside the cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sandbox-runner-1
+  namespace: n8n
+  labels:
+    app: sandbox-runner-1
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sandbox-runner-1
+  revisionHistoryLimit: 0
+  template:
+    metadata:
+      labels:
+        app: sandbox-runner-1
+    spec:
+      enableServiceLinks: false
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: sandbox-runner
+        image: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind:1.8.1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"
+        env:
+        - name: TZ
+          value: "America/New_York"
+        - name: SANDBOX_RUNNER_REGISTRATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_REGISTRATION_TOKEN
+        - name: SANDBOX_RUNNER_API_KEYS
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_RUNNER_API_KEY
+        - name: SANDBOX_RUNNER_API_GRPC_ADDR
+          value: sandbox-api:9090
+        - name: SANDBOX_RUNNER_HTTP_BASE_URL
+          value: https://sandbox-runner-1:8080
+        - name: SANDBOX_RUNNER_CONTROL_GRPC_LISTEN_ADDR
+          value: ":9091"
+        - name: SANDBOX_RUNNER_CONTROL_GRPC_ADVERTISE_ADDR
+          value: sandbox-runner-1:9091
+        - name: SANDBOX_RUNNER_ID
+          value: runner-1
+        - name: SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE
+          value: ghcr.io/n8n-io/n8n-sandbox-service-sandbox:1.8.1
+        - name: SANDBOX_RUNNER_REGISTRATION_GRPC_CA_FILE
+          value: /tls/runner/ca.crt
+        - name: SANDBOX_RUNNER_REGISTRATION_GRPC_CERT_FILE
+          value: /tls/runner/grpc-client.crt
+        - name: SANDBOX_RUNNER_REGISTRATION_GRPC_KEY_FILE
+          value: /tls/runner/grpc-client.key
+        - name: SANDBOX_RUNNER_REGISTRATION_GRPC_SERVER_NAME
+          value: sandbox-api
+        - name: SANDBOX_RUNNER_CONTROL_GRPC_TLS_CERT_FILE
+          value: /tls/runner/control-grpc-server.crt
+        - name: SANDBOX_RUNNER_CONTROL_GRPC_TLS_KEY_FILE
+          value: /tls/runner/control-grpc-server.key
+        - name: SANDBOX_RUNNER_CONTROL_GRPC_TLS_CLIENT_CA_FILE
+          value: /tls/runner/ca.crt
+        volumeMounts:
+        - name: tls
+          mountPath: /tls/runner
+          readOnly: true
+        # Inner dockerd storage; avoids overlay-on-overlay inside the container.
+        - name: docker-data
+          mountPath: /var/lib/docker
+        ports:
+        - name: https
+          containerPort: 8080
+        - name: control-grpc
+          containerPort: 9091
+      volumes:
+      - name: tls
+        secret:
+          secretName: n8n-sandbox-tls-runner
+          defaultMode: 0444
+      - name: docker-data
+        emptyDir:
+          sizeLimit: 20Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sandbox-runner-1
+  namespace: n8n
+spec:
+  selector:
+    app: sandbox-runner-1
+  type: ClusterIP
+  ports:
+  - name: https
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: control-grpc
+    port: 9091
+    targetPort: 9091
+    protocol: TCP

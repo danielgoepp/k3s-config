@@ -78,6 +78,8 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 
 Each top-level directory represents a service/application. Some use raw manifests, others use Helm charts with custom values.
 
+App-specific notes go in `<service-name>/CLAUDE.md` (loaded only when working in that directory), not in this file.
+
 ## Common Commands
 
 ### Applying Configurations

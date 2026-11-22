@@ -73,6 +73,20 @@ spec:
           value: "n8n"
         - name: N8N_ENCRYPTION_KEY
           value: "n8n"
+        # Sandbox service (see n8n-sandbox-prod.yaml)
+        - name: N8N_INSTANCE_AI_SANDBOX_ENABLED
+          value: "true"
+        - name: N8N_INSTANCE_AI_SANDBOX_PROVIDER
+          value: "n8n-sandbox"
+        - name: N8N_INSTANCE_AI_SANDBOX_API_URL
+          value: "http://sandbox-api:8080"
+        - name: N8N_SANDBOX_SERVICE_URL
+          value: "http://sandbox-api:8080"
+        - name: N8N_SANDBOX_SERVICE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-sandbox
+              key: SANDBOX_API_KEYS
         volumeMounts:
         - name: n8n-config
           mountPath: "/home/node/.n8n"
