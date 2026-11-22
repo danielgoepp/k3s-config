@@ -3,6 +3,7 @@
 Guidance for the n8n deployment in this directory (namespace `n8n`).
 
 - **n8n**: Workflow automation (`manifests/n8n-prod.yaml`), exposed via IngressRoute
+  - `N8N_EDITOR_BASE_URL` / `N8N_WEBHOOK_URL` must be the public `https://` URL. n8n uses them in its MCP OAuth discovery metadata. Without them it advertises `http://<host>:5678`, which clients can't reach through the ingress.
 - **Sandbox service** (`manifests/n8n-sandbox-prod.yaml`): code sandbox for the n8n AI assistant, ported from n8n's reference compose file
   - `sandbox-api` (HTTP 8080, gRPC 9090) and `sandbox-runner-1` (privileged Docker-in-Docker, HTTPS 8080, control gRPC 9091); cluster-internal only, no ingress
   - mTLS certs are generated once by the `n8n-sandbox-certs` Job into the `n8n-sandbox-tls-api` / `n8n-sandbox-tls-runner` Secrets (rotation steps are in the manifest header)
