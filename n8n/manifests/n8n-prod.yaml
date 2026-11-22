@@ -101,6 +101,9 @@ spec:
         # 127.0.0.1:5679 (pod-local), so it is never exposed via a Service.
         - name: N8N_RUNNERS_MODE
           value: "external"
+        # Pin the current default (n8n plans to lower it to 60s)
+        - name: N8N_RUNNERS_TASK_TIMEOUT
+          value: "300"
         - name: N8N_RUNNERS_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
