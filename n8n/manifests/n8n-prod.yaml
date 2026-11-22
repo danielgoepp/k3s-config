@@ -78,8 +78,18 @@ spec:
           value: ""
         - name: N8N_DIAGNOSTICS_CONFIG_BACKEND
           value: ""
+        # Credential encryption key and session signing secret (Secret n8n-core,
+        # gitignored). The key must match "encryptionKey" in /home/node/.n8n/config.
         - name: N8N_ENCRYPTION_KEY
-          value: "n8n"
+          valueFrom:
+            secretKeyRef:
+              name: n8n-core
+              key: N8N_ENCRYPTION_KEY
+        - name: N8N_USER_MANAGEMENT_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: n8n-core
+              key: N8N_USER_MANAGEMENT_JWT_SECRET
         # Sandbox service (see n8n-sandbox-prod.yaml)
         - name: N8N_INSTANCE_AI_SANDBOX_ENABLED
           value: "true"
