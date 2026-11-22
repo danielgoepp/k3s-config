@@ -100,6 +100,13 @@ spec:
         # Web search for the AI assistant (see n8n-searxng-prod.yaml)
         - name: N8N_INSTANCE_AI_SEARXNG_URL
           value: "http://searxng:8080"
+        # Model API key for the AI assistant (Secret n8n-instance-ai, gitignored)
+        - name: N8N_INSTANCE_AI_MODEL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-instance-ai
+              key: N8N_INSTANCE_AI_MODEL_API_KEY
+              optional: true
         # Task runners run as the "runners" sidecar below; the broker stays on
         # 127.0.0.1:5679 (pod-local), so it is never exposed via a Service.
         - name: N8N_RUNNERS_MODE
