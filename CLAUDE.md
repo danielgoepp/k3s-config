@@ -22,6 +22,7 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 **Storage & Data Persistence**
 - Most applications use `hostPath` volumes pointing to `/mnt/k3s-prod-data/<app-name>`
 - PostgreSQL databases managed by CloudNativePG (CNPG) operator
+  - pgAdmin's server list is generated, not hand-maintained: `pgadmin/sync-cnpg-servers.sh` builds `servers.json` and the pgpass file from all CNPG `Cluster` resources and their `<cluster>-app` secrets, writes the `pgadmin-cnpg-servers` ConfigMap and `pgpassfile` Secret (referenced by the Helm values via `serverDefinitions.existingConfigmap`), and loads them into the running pod. Re-run it after adding or removing a CNPG cluster (`--dry-run` prints the generated JSON)
 - Node affinity pins workloads to specific nodes for data locality
 
 **Monitoring & Logging**
