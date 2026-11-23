@@ -15,11 +15,13 @@ Guidance for the n8n deployment in this directory (namespace `n8n`).
 - **AI assistant (Instance AI)**: model API key comes from the gitignored `manifests/n8n-instance-ai-secrets.yaml` (Secret `n8n-instance-ai`, optional ref). The default model is `anthropic/claude-opus-5-5`; override with `N8N_INSTANCE_AI_MODEL` (and `N8N_INSTANCE_AI_MODEL_URL` for other endpoints). Web search uses SearXNG; code execution uses the sandbox service
 - **Sandbox service** (`manifests/n8n-sandbox-prod.yaml`): code sandbox for the n8n AI assistant, ported from n8n's reference compose file
   - `sandbox-api` (HTTP 8080, gRPC 9090) and `sandbox-runner-1` (privileged Docker-in-Docker, HTTPS 8080, control gRPC 9091); cluster-internal only, no ingress
-  - mTLS certs are generated once by the `n8n-sandbox-certs` Job into the `n8n-sandbox-tls-api` / `n8n-sandbox-tls-runner` Secrets (rotation steps are in the manifest header)
+  - mTLS certs are generated once by the `n8n-sandbox-certs` Job (`manifests/n8n-sandbox-certs-prod.yaml`, apply it first) into the `n8n-sandbox-tls-api` / `n8n-sandbox-tls-runner` Secrets (rotation steps are in that manifest's header)
+  - The Job lives in its own manifest because a Job's pod template is immutable: keeping it in `n8n-sandbox-prod.yaml` would make every version-bump apply (version-checker / AWX `n8n-sandbox-prod`) fail on it. Its bootstrap image doesn't track the sandbox release
   - Shared keys live in the gitignored `n8n-sandbox-secrets.yaml` (Secret `n8n-sandbox`); n8n reads `SANDBOX_API_KEYS` as `N8N_SANDBOX_SERVICE_API_KEY`
   - Service names `sandbox-api` / `sandbox-runner-1` are baked into the cert SANs; don't rename them
   - Sandbox pods set `enableServiceLinks: false` so injected `SANDBOX_API_*` service env vars don't collide with app config
   - API, runner and `SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE` must stay on the same sandbox release
+  - Upgrades: version-checker tracks it as `n8n` instance `sandbox-prod`, rewriting every sandbox tag in `n8n-sandbox-prod.yaml` together; SearXNG is instance `searxng-prod` (full `YYYY.MM.DD-<commit>` tag)
 - **SearXNG** (`manifests/n8n-searxng-prod.yaml`): web-search backend for the AI assistant, reached by n8n at `http://searxng:8080` (`N8N_INSTANCE_AI_SEARXNG_URL`); cluster-internal only, no ingress
   - `settings.yml` and `limiter.toml` come from the `searxng-settings` ConfigMap; the `json` format must stay enabled for n8n's queries. Limiter is off; Tor engines (ahmia, torch) are removed
   - ConfigMap files are `subPath` mounts, which don't auto-update: bump the `n8n.goepp.net/settings-rev` pod annotation when editing them
