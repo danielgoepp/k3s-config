@@ -17,7 +17,10 @@ NS="${PGADMIN_NAMESPACE:-pgadmin}"
 DEPLOY="${PGADMIN_DEPLOYMENT:-pgadmin-pgadmin4}"
 SERVERS_CM="${PGADMIN_SERVERS_CONFIGMAP:-pgadmin-cnpg-servers}"
 PGPASS_SECRET="${PGADMIN_PGPASS_SECRET:-pgpassfile}"
-PGPASS_PATH="/var/lib/pgadmin/pgpass"   # must match env.pgpassfile in the Helm values
+# pgAdmin runs in server mode, where a server's PassFile is resolved relative to
+# the user's storage directory (/var/lib/pgadmin/storage/<email with @ -> _>/).
+# Absolute paths outside it are silently ignored and pgAdmin prompts instead.
+PASSFILE_REF="/pgpass"   # value written into servers.json
 GROUP="${PGADMIN_GROUP:-CNPG}"
 
 tmp=$(mktemp -d)
@@ -26,7 +29,7 @@ trap 'rm -rf "$tmp"' EXIT
 kubectl get clusters.postgresql.cnpg.io -A -o json > "$tmp/clusters.json"
 
 # servers.json — one entry per CNPG cluster, pointed at its -rw service
-jq --arg group "$GROUP" --arg passfile "$PGPASS_PATH" '
+jq --arg group "$GROUP" --arg passfile "$PASSFILE_REF" '
   [.items | sort_by(.metadata.namespace, .metadata.name)[] | {
     Name: .metadata.name,
     Group: $group,
@@ -68,9 +71,10 @@ kubectl create secret generic "$PGPASS_SECRET" -n "$NS" \
 # 2. Load into the running pod
 email=$(kubectl get deploy -n "$NS" "$DEPLOY" -o json |
   jq -r '.spec.template.spec.containers[0].env[] | select(.name=="PGADMIN_DEFAULT_EMAIL") | .value')
+pgpass_path="/var/lib/pgadmin/storage/${email//@/_}${PASSFILE_REF}"
 
 kubectl exec -i -n "$NS" "deploy/$DEPLOY" -c pgadmin4 -- \
-  sh -c "umask 077 && cat > $PGPASS_PATH" < "$tmp/pgpass"
+  sh -c "umask 077 && mkdir -p \"$(dirname "$pgpass_path")\" && cat > \"$pgpass_path\"" < "$tmp/pgpass"
 kubectl exec -i -n "$NS" "deploy/$DEPLOY" -c pgadmin4 -- \
   sh -c "cat > /tmp/servers.json && /venv/bin/python3 /pgadmin4/setup.py load-servers /tmp/servers.json --user '$email' --replace && rm -f /tmp/servers.json" \
   < "$tmp/servers.json"

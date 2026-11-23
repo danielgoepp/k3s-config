@@ -37,7 +37,9 @@ VolumePermissions:
 extraInitContainers: |
   - name: prepare-pgpass
     image: docker.io/dpage/pgadmin4:9.19.0
-    command: [ 'sh', '-c', "cp /tmp/pgpass /var/lib/pgadmin/pgpass && chown pgadmin /var/lib/pgadmin/pgpass && chmod 600 /var/lib/pgadmin/pgpass " ]
+    # pgAdmin (server mode) resolves a server's PassFile relative to the user's
+    # storage dir, so the file must live there; servers.json uses PassFile "/pgpass".
+    command: [ 'sh', '-c', "S=/var/lib/pgadmin/storage && D=$S/dan_goepp.com && mkdir -p $D && cp /tmp/pgpass $D/pgpass && chown -R 5050:5050 $S && chmod 700 $S $D && chmod 600 $D/pgpass" ]
     volumeMounts:
       - name: pgadmin-data
         mountPath: /var/lib/pgadmin
@@ -55,7 +57,7 @@ secretKeys:
 
 env:
   email: dan@goepp.com
-  pgpassfile: "/var/lib/pgadmin/pgpass"
+  pgpassfile: "/var/lib/pgadmin/storage/dan_goepp.com/pgpass"
 
 persistentVolume:
   enabled: false
