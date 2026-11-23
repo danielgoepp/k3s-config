@@ -76,7 +76,7 @@ spec:
           value: "1"
       containers:
       - name: searxng
-        image: ghcr.io/searxng/searxng:2026.11.21-c6ee3e9fd
+        image: ghcr.io/searxng/searxng:2026.11.23-a7163d091
         imagePullPolicy: IfNotPresent
         resources:
           requests:
