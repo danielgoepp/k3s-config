@@ -44,7 +44,7 @@ spec:
           value: "1"
       containers:
       - name: sandbox-api
-        image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.8.1
+        image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.16.0
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -160,7 +160,7 @@ spec:
           value: "1"
       containers:
       - name: sandbox-runner
-        image: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind:1.8.1
+        image: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind:1.16.0
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
@@ -195,7 +195,7 @@ spec:
         - name: SANDBOX_RUNNER_ID
           value: runner-1
         - name: SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE
-          value: ghcr.io/n8n-io/n8n-sandbox-service-sandbox:1.8.1
+          value: ghcr.io/n8n-io/n8n-sandbox-service-sandbox:1.16.0
         - name: SANDBOX_RUNNER_REGISTRATION_GRPC_CA_FILE
           value: /tls/runner/ca.crt
         - name: SANDBOX_RUNNER_REGISTRATION_GRPC_CERT_FILE
