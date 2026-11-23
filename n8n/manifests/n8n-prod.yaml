@@ -29,7 +29,7 @@ spec:
       enableServiceLinks: false
       containers:
       - name: n8n
-        image: n8nio/n8n:2.49.3
+        image: n8nio/n8n:2.49.4
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -143,7 +143,7 @@ spec:
       # Runs Code-node user code (JavaScript and Python). Image tag must match
       # the n8n version above.
       - name: runners
-        image: ghcr.io/n8n-io/runners:2.49.3
+        image: ghcr.io/n8n-io/runners:2.49.4
         imagePullPolicy: IfNotPresent
         resources:
           requests:
