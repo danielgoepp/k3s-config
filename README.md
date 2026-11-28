@@ -24,7 +24,7 @@ This repository manages a complete home infrastructure stack including:
 - **k3s**: Lightweight Kubernetes distribution
 - **Traefik**: Ingress controller with custom TCP/UDP entry points
 - **MetalLB**: Layer 2 load balancer (IP pool: 10.1.11.51-59)
-- **cert-manager**: Automated TLS certificate management via Cloudflare DNS
+- **cert-manager**: Automated TLS certificate management via Cloudflare DNS-01, with one Helm values file per cluster. The values files point DNS-01 checks at public resolvers so split-horizon or VPN DNS can't stall renewals
 - **CloudNativePG**: PostgreSQL operator for database workloads
 
 ## Repository Structure

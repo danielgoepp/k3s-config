@@ -1,0 +1,13 @@
+global:
+  revisionHistoryLimit: 0
+
+crds:
+  enabled: true
+
+extraArgs:
+  - --max-concurrent-challenges=60
+  # Bypass the node resolver (router DNS on morgspi) for ACME DNS-01
+  # zone discovery and self-checks. On mudderpi, without this, renewals stalled with an
+  # empty Cloudflare zone ID (DELETE /zones//dns_records/...).
+  - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53
+  - --dns01-recursive-nameservers-only=true

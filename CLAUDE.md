@@ -18,6 +18,10 @@ This repository contains Kubernetes manifests and Helm values for a k3s-based ho
 - **MetalLB**: L2 load balancer providing IP pool 10.1.11.51-10.1.11.59
   - Node selectors target specific k3s nodes (k3s-prod-11, 12, 13, 15)
 - **cert-manager**: Manages TLS certificates with Cloudflare DNS challenge
+  - One Helm release per cluster, each with its own values file: `cert-manager/helm/cert-manager-{prod,morgspi,mudderpi}-values.yaml`
+  - Every values file must keep `--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53` and `--dns01-recursive-nameservers-only=true`. Without them, DNS-01 zone discovery and propagation checks use the cluster's own resolver (split-horizon on prod, Tailscale MagicDNS on the remote Pis), and renewals stall. On mudderpi this showed up as Cloudflare API calls with an empty zone ID (`/zones//dns_records/...`), and the cert expired
+  - The remote Pis use the built-in k3s Traefik; their Issuer and wildcard Certificate are in `traefik/manifests/cert-manager-wildcard-remote-pis.yaml` (namespace `kube-system`)
+  - The chart reads the controller image tag from `image.tag`. `global.image` is not a chart key, so setting it there has no effect
 
 **Storage & Data Persistence**
 - Most applications use `hostPath` volumes pointing to `/mnt/k3s-prod-data/<app-name>`
