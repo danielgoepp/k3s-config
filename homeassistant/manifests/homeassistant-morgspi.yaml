@@ -46,9 +46,6 @@ spec:
         - name: TZ
           value: "America/New_York"
         volumeMounts:
-        - name: ttyusb
-          mountPath: /dev/ttyACM0
-        volumeMounts:
         - name: homeassistant-config
           mountPath: /config
         ports:
@@ -63,9 +60,6 @@ spec:
             path: /
             port: 8123
       volumes:
-      - name: ttyusb
-        hostPath:
-          path: /dev/ttyACM0
       - name: homeassistant-config
         hostPath:
           path: "/k3s/homeassistant/config"
